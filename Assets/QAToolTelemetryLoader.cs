@@ -38,4 +38,18 @@ public static class QAToolTelemetryLoader
 
         return positions;
     }
+
+    public static void CreateGizmos(List<Vector3> positions)
+    {
+        
+        for (int i = 0; i < positions.Count; i++)
+        {
+            Gizmos.DrawSphere(positions[i], 1);
+            if (i != 0)
+            {
+                Gizmos.DrawLine(positions[i-1], positions[i]);
+            }
+        }
+        
+    }
 }
