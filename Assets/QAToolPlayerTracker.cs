@@ -1,4 +1,6 @@
+using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -13,8 +15,9 @@ public class QAToolPlayerTracker : MonoBehaviour
     private string filePath;
     private Vector3 pos;
 
-    void Start()
+    void Awake()
     {
+
         string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         string folderPath = Path.Combine(documentsPath, "QATool");
         filePath = Path.Combine(folderPath, $"{1}.jsonl");
@@ -22,6 +25,9 @@ public class QAToolPlayerTracker : MonoBehaviour
         // Make sure the folder exists
         Directory.CreateDirectory(folderPath);
 
+    }
+    void Start()
+    {
         if (File.Exists(filePath))
         {
             File.Delete(filePath);
