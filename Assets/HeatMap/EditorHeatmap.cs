@@ -13,6 +13,7 @@ public class EditorHeatmap : MonoBehaviour
     public float opacity = 0.6f;
 
     public int drawThreshold = 1;
+    public float saturation = 0.5f;
 
     Dictionary<Vector3Int, int> heatmap = new Dictionary<Vector3Int, int>();
     bool loaded = false;
@@ -96,6 +97,9 @@ public class EditorHeatmap : MonoBehaviour
             float normalized =
                 (float)(kvp.Value - minCount) /
                 (float)(maxCount - minCount);
+
+            normalized = Mathf.Pow(normalized, saturation);   // tweak: 0.4 - 0.6
+
 
             Color color = Color.Lerp(Color.green, Color.red, normalized);
 
