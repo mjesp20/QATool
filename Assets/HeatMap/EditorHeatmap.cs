@@ -12,6 +12,8 @@ public class EditorHeatmap : MonoBehaviour
     [Range(0f, 1f)]
     public float opacity = 0.6f;
 
+    public int drawThreshold = 1;
+
     Dictionary<Vector3Int, int> heatmap = new Dictionary<Vector3Int, int>();
     bool loaded = false;
 
@@ -75,6 +77,10 @@ public class EditorHeatmap : MonoBehaviour
 
         foreach (var kvp in heatmap)
         {
+            
+            if (kvp.Value < drawThreshold) 
+                continue;
+            
             float normalized = (float)kvp.Value / maxCount;
             Color color = Color.Lerp(Color.green, Color.red, normalized);
 

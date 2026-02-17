@@ -586,9 +586,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   folderPath: C:\Users\rasmu\Documents\QATool
-  cellSize: 3
+  cellSize: 1
   heightOffset: 0.05
   opacity: 0.4
+  drawThreshold: 2
 --- !u!1 &719672431
 GameObject:
   m_ObjectHideFlags: 0
