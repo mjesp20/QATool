@@ -15,9 +15,8 @@ public class QAToolPositionInstantiater : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
-        string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        string folderPath = Path.Combine(documentsPath, "QATool");
-        filePath = Path.Combine(folderPath, $"{1}.jsonl");
+
+        filePath = Path.Combine(QAToolGlobals.folderPath, $"{1}.jsonl");
 
         positions = QAToolTelemetryLoader.LoadPositions(filePath);
 

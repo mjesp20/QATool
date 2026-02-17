@@ -5,7 +5,7 @@ using UnityEngine;
 [ExecuteAlways]
 public class EditorHeatmap : MonoBehaviour
 {
-    public string folderPath = @"C:\Users\rasmu\Documents\QATool";
+    string folderPath = QAToolGlobals.folderPath;
     public float cellSize = 1f;
     public float heightOffset = 0.02f;
     

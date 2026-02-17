@@ -29,9 +29,10 @@ public class QAToolWindow : EditorWindow
         GetWindow<QAToolWindow>("QA Tool");
     }
 
-    private void OnGUI()
+    void OnGUI()
     {
-        GUILayout.Label("QA Tool", EditorStyles.boldLabel);
+        //GUILayout.Label("QA Tool", EditorStyles.boldLabel);
+
 
         if (GUILayout.Button("Reload Player Path Data"))
         {
@@ -42,13 +43,23 @@ public class QAToolWindow : EditorWindow
         {
             ShowPlayerTrails();
         }
+
+        EditorGUI.BeginChangeCheck();
+        QAToolGlobals.showGhostTrails = EditorGUILayout.Toggle("Show Ghost Trails", QAToolGlobals.showGhostTrails);
+        if (EditorGUI.EndChangeCheck())
+        {
+            LoadPlayerTelemetryData();
+            SceneView.RepaintAll();
+        }
+
     }
+
 
     private void OnSceneGUI(SceneView sceneView)
     {
+        if (!QAToolGlobals.showGhostTrails) return;
         if (allTrails == null || allTrails.Count == 0) return;
 
-        // Assign a different color per trail
         Color[] trailColors = { Color.red, Color.cyan, Color.green, Color.yellow, Color.magenta };
 
         for (int t = 0; t < allTrails.Count; t++)
@@ -58,13 +69,11 @@ public class QAToolWindow : EditorWindow
 
             Handles.color = trailColors[t % trailColors.Length];
 
-            // Draw a sphere at each position
             foreach (Vector3 pos in trail)
             {
                 Handles.SphereHandleCap(0, pos, Quaternion.identity, 0.2f, EventType.Repaint);
             }
 
-            // Draw lines connecting the positions
             for (int i = 0; i < trail.Count - 1; i++)
             {
                 Handles.DrawLine(trail[i], trail[i + 1]);
@@ -72,20 +81,18 @@ public class QAToolWindow : EditorWindow
         }
     }
 
+
     public void LoadPlayerTelemetryData()
     {
         allTrails.Clear();
 
-        string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        string folderPath = Path.Combine(documentsPath, "QATool");
-
-        if (!Directory.Exists(folderPath))
+        if (!QAToolGlobals.showGhostTrails)
         {
-            Debug.LogWarning($"QATool folder not found at: {folderPath}");
+            SceneView.RepaintAll();
             return;
         }
 
-        foreach (var file in Directory.GetFiles(folderPath))
+        foreach (var file in Directory.GetFiles(QAToolGlobals.folderPath))
         {
             List<Vector3> positions = QAToolTelemetryLoader.LoadPositions(file);
             if (positions != null && positions.Count > 0)
@@ -95,10 +102,9 @@ public class QAToolWindow : EditorWindow
         }
 
         Debug.Log($"Loaded {allTrails.Count} trails.");
-
-        // Repaint the scene to reflect changes immediately
         SceneView.RepaintAll();
     }
+
 
     private void ShowPlayerTrails()
     {
