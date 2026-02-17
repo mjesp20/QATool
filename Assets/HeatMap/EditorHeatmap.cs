@@ -12,7 +12,7 @@ public class EditorHeatmap : MonoBehaviour
     [Range(0f, 1f)]
     public float opacity = 0.6f;
 
-    Dictionary<Vector2Int, int> heatmap = new Dictionary<Vector2Int, int>();
+    Dictionary<Vector3Int, int> heatmap = new Dictionary<Vector3Int, int>();
     bool loaded = false;
 
     void Update()
@@ -38,29 +38,27 @@ public class EditorHeatmap : MonoBehaviour
 
         foreach (string file in files)
         {
-            string[] lines = File.ReadAllLines(file);
+            
+            List<Vector3> positions = QAToolTelemetryLoader.LoadPositions(file);
 
-            foreach (string line in lines)
+            foreach (var position in positions)
             {
-                if (string.IsNullOrWhiteSpace(line))
-                    continue;
-
-                PlayerLogEntry entry =
-                    JsonUtility.FromJson<PlayerLogEntry>(line);
-
-                if (entry == null || entry.PlayerPosition == null)
-                    continue;
-
-                Vector2Int cell = new Vector2Int(
-                    Mathf.FloorToInt(entry.PlayerPosition.x / cellSize),
-                    Mathf.FloorToInt(entry.PlayerPosition.z / cellSize)
+                Vector3Int cell = new Vector3Int(
+                    Mathf.FloorToInt(position.x / cellSize),
+                    Mathf.FloorToInt(position.y / cellSize),
+                    Mathf.FloorToInt(position.z / cellSize)
                 );
-
+                
                 if (!heatmap.ContainsKey(cell))
                     heatmap[cell] = 0;
 
                 heatmap[cell]++;
             }
+            
+            
+            
+            
+            
         }
 
         Debug.Log("Editor Heatmap Loaded Cells: " + heatmap.Count);
@@ -82,12 +80,12 @@ public class EditorHeatmap : MonoBehaviour
 
             Vector3 center = new Vector3(
                 kvp.Key.x * cellSize + cellSize / 2f,
-                heightOffset,
-                kvp.Key.y * cellSize + cellSize / 2f
+                kvp.Key.y * cellSize + cellSize / 2f,
+                kvp.Key.z * cellSize + cellSize / 2f
             );
 
             Gizmos.color = new Color(color.r, color.g, color.b, opacity);
-            Gizmos.DrawCube(center, new Vector3(cellSize, 0.02f, cellSize));
+            Gizmos.DrawCube(center, new Vector3(cellSize, cellSize, cellSize));
         }
     }
 }
