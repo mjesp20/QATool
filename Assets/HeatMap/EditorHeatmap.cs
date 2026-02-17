@@ -71,17 +71,32 @@ public class EditorHeatmap : MonoBehaviour
         if (heatmap == null || heatmap.Count == 0)
             return;
 
+        int minCount = int.MaxValue;
         int maxCount = 0;
+
+        // Find min & max of only values that pass threshold
         foreach (var kvp in heatmap)
+        {
+            if (kvp.Value < drawThreshold)
+                continue;
+
+            minCount = Mathf.Min(minCount, kvp.Value);
             maxCount = Mathf.Max(maxCount, kvp.Value);
+        }
+
+        // Prevent divide-by-zero if all values equal
+        if (minCount == maxCount)
+            maxCount = minCount + 1;
 
         foreach (var kvp in heatmap)
         {
-            
-            if (kvp.Value < drawThreshold) 
+            if (kvp.Value < drawThreshold)
                 continue;
-            
-            float normalized = (float)kvp.Value / maxCount;
+
+            float normalized =
+                (float)(kvp.Value - minCount) /
+                (float)(maxCount - minCount);
+
             Color color = Color.Lerp(Color.green, Color.red, normalized);
 
             Vector3 center = new Vector3(
@@ -91,23 +106,8 @@ public class EditorHeatmap : MonoBehaviour
             );
 
             Gizmos.color = new Color(color.r, color.g, color.b, opacity);
-            Gizmos.DrawCube(center, new Vector3(cellSize, cellSize, cellSize));
+            Gizmos.DrawCube(center, Vector3.one * cellSize);
         }
     }
-}
-
-[System.Serializable]
-public class PositionData
-{
-    public float x;
-    public float y;
-    public float z;
-}
-
-[System.Serializable]
-public class PlayerLogEntry
-{
-    public string time;
-    public string playerID;
-    public PositionData PlayerPosition;
+    
 }
