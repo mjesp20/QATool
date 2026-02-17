@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using UnityEngine;
 
@@ -51,9 +52,9 @@ public class QAToolPlayerTracker : MonoBehaviour
                 $"{{ \"time\": \"{DateTime.Now:o}\"," +
                 $" \"playerID\": \"1\"," +
                 $" \"PlayerPosition\": {{" +
-                $" \"x\": {pos.x}," +
-                $" \"y\": {pos.y}," +
-                $" \"z\": {pos.z}" +
+                $" \"x\": {pos.x.ToString(CultureInfo.InvariantCulture)}," +
+                $" \"y\": {pos.y.ToString(CultureInfo.InvariantCulture)}," +
+                $" \"z\": {pos.z.ToString(CultureInfo.InvariantCulture)}" +
                 $" }} }}";
 
 
