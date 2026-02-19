@@ -10,7 +10,10 @@ using UnityEngine;
 public class QAToolPlayerTracker : MonoBehaviour
 {
     [SerializeField]
-    float trackEverySecond = 1;
+    public float dataPointsPerSecond = 10f;
+    
+    
+    private float timerFrequency = 1f;
 
     private float timer;
     private string filePath;
@@ -37,7 +40,7 @@ public class QAToolPlayerTracker : MonoBehaviour
     }
     void Start()
     {
-
+        timerFrequency = 1f / dataPointsPerSecond;
     }
 
     // Update is called once per frame
@@ -45,7 +48,7 @@ public class QAToolPlayerTracker : MonoBehaviour
     {
         timer += Time.deltaTime;
 
-        if (timer >= trackEverySecond)
+        if (timer >= timerFrequency)
         {
             timer = 0;
             pos = transform.position;
