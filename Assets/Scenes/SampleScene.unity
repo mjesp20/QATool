@@ -264,7 +264,7 @@ Transform:
   m_GameObject: {fileID: 265560140}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.89, y: 2.38, z: 4.09}
+  m_LocalPosition: {x: 24.18, y: 2.38, z: 19.71}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -370,7 +370,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0.52676094, y: -0, z: -0, w: 0.85001355}
-  m_LocalPosition: {x: 0, y: 12.3, z: -7}
+  m_LocalPosition: {x: 0, y: 28.7, z: -15.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -567,7 +567,7 @@ Transform:
   m_GameObject: {fileID: 544821417}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.11400032, y: 2.1341686, z: 26.704271}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -585,11 +585,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ff31161d776fa543a6f4ddbadb16c97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  folderPath: C:\Users\rasmu\Documents\QATool
-  cellSize: 1
-  heightOffset: 0.05
-  opacity: 0.4
-  drawThreshold: 2
+  cellSize: 0.652
+  heightOffset: 0
+  opacity: 0.642
+  drawThreshold: 1
+  contrast: 1.02
 --- !u!1 &719672431
 GameObject:
   m_ObjectHideFlags: 0
@@ -786,7 +786,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 17.129, y: 0.1, z: 14.734}
+  m_LocalScale: {x: 61.811707, y: 0.1, z: 42.861206}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}

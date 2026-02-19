@@ -18,21 +18,26 @@ public class QAToolPlayerTracker : MonoBehaviour
 
     void Awake()
     {
+        if (!Directory.Exists(QAToolGlobals.folderPath))
+        {
+            Directory.CreateDirectory(QAToolGlobals.folderPath);
+        }
 
-        string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        string folderPath = Path.Combine(documentsPath, "QATool");
-        filePath = Path.Combine(folderPath, $"{1}.jsonl");
-
-        // Make sure the folder exists
-        Directory.CreateDirectory(folderPath);
-
+        int highest = 0;
+        foreach (string file in Directory.GetFiles(QAToolGlobals.folderPath, "*.jsonl"))
+        {
+            string filename = Path.GetFileNameWithoutExtension(file);
+            if (int.TryParse(filename, out int num) && num > highest)
+            {
+                highest = num;
+            }
+        }
+        highest++;
+        filePath = Path.Combine(QAToolGlobals.folderPath, $"{highest}.jsonl");
     }
     void Start()
     {
-        if (File.Exists(filePath))
-        {
-            File.Delete(filePath);
-        }
+
     }
 
     // Update is called once per frame

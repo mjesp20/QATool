@@ -6,29 +6,44 @@ using UnityEngine;
 public class EditorHeatmap : MonoBehaviour
 {
     string folderPath = QAToolGlobals.folderPath;
+    [Range(0f, 2f)]
     public float cellSize = 1f;
     public float heightOffset = 0.02f;
-    
+
     [Range(0f, 1f)]
     public float opacity = 0.6f;
-
+    [Range(1, 5)]
     public int drawThreshold = 1;
-    public float saturation = 0.5f;
+    public float contrast;
 
+    [System.NonSerialized]
     Dictionary<Vector3Int, int> heatmap = new Dictionary<Vector3Int, int>();
+
+    [System.NonSerialized]
     bool loaded = false;
 
-    void Update()
+    [System.NonSerialized]
+    float lastCellSize = -1f;
+
+    void OnValidate()
     {
-        if (!loaded)
+        if (!loaded || cellSize != lastCellSize)
         {
             LoadHeatmap();
             loaded = true;
+            lastCellSize = cellSize;
         }
+
+#if UNITY_EDITOR
+        UnityEditor.SceneView.RepaintAll();
+#endif
     }
 
     void LoadHeatmap()
     {
+        if (heatmap == null)
+            heatmap = new Dictionary<Vector3Int, int>();
+
         heatmap.Clear();
 
         if (!Directory.Exists(folderPath))
@@ -38,11 +53,12 @@ public class EditorHeatmap : MonoBehaviour
         }
 
         string[] files = Directory.GetFiles(folderPath, "*.jsonl");
+        Debug.Log($"Found {files.Length} jsonl files in {folderPath}");
 
         foreach (string file in files)
         {
-            
             List<Vector3> positions = QAToolTelemetryLoader.LoadPositions(file);
+            Debug.Log($"{Path.GetFileName(file)}: {positions.Count} positions");
 
             foreach (var position in positions)
             {
@@ -51,20 +67,14 @@ public class EditorHeatmap : MonoBehaviour
                     Mathf.FloorToInt(position.y / cellSize),
                     Mathf.FloorToInt(position.z / cellSize)
                 );
-                
+
                 if (!heatmap.ContainsKey(cell))
                     heatmap[cell] = 0;
-
                 heatmap[cell]++;
             }
-            
-            
-            
-            
-            
         }
 
-        Debug.Log("Editor Heatmap Loaded Cells: " + heatmap.Count);
+        Debug.Log($"Heatmap loaded: {heatmap.Count} cells");
     }
 
     void OnDrawGizmos()
@@ -75,31 +85,25 @@ public class EditorHeatmap : MonoBehaviour
         int minCount = int.MaxValue;
         int maxCount = 0;
 
-        // Find min & max of only values that pass threshold
         foreach (var kvp in heatmap)
         {
-            if (kvp.Value < drawThreshold)
-                continue;
-
+            if (kvp.Value < drawThreshold) continue;
             minCount = Mathf.Min(minCount, kvp.Value);
             maxCount = Mathf.Max(maxCount, kvp.Value);
         }
 
-        // Prevent divide-by-zero if all values equal
-        if (minCount == maxCount)
-            maxCount = minCount + 1;
+        if (minCount == int.MaxValue) return;
+        if (minCount == maxCount) maxCount = minCount + 1;
+
+        int logMin = Mathf.Max(1, minCount);
+        int logMax = Mathf.Max(logMin + 1, maxCount);
 
         foreach (var kvp in heatmap)
         {
-            if (kvp.Value < drawThreshold)
-                continue;
+            if (kvp.Value < drawThreshold) continue;
 
-            float normalized =
-                (float)(kvp.Value - minCount) /
-                (float)(maxCount - minCount);
-
-            normalized = Mathf.Pow(normalized, saturation);   // tweak: 0.4 - 0.6
-
+            float normalized = Mathf.Log(kvp.Value - logMin + 2f) / Mathf.Log(logMax - logMin + 2f);
+            normalized = Mathf.Pow(normalized, contrast);
 
             Color color = Color.Lerp(Color.green, Color.red, normalized);
 
@@ -113,5 +117,4 @@ public class EditorHeatmap : MonoBehaviour
             Gizmos.DrawCube(center, Vector3.one * cellSize);
         }
     }
-    
 }
