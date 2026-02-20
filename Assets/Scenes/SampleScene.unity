@@ -180,7 +180,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5b911a3f9348ee44a23339085659f0c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 5
+  moveSpeed: 10
+  turnSpeed: 100
 --- !u!65 &265560143
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -264,7 +265,7 @@ Transform:
   m_GameObject: {fileID: 265560140}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 24.18, y: 2.38, z: 19.71}
+  m_LocalPosition: {x: 4.4, y: 0.76, z: -12.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

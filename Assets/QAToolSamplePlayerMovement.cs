@@ -2,29 +2,30 @@ using UnityEngine;
 
 public class QAToolSamplePlayerMovement : MonoBehaviour
 {
-    [SerializeField]
-    float moveSpeed = 1;
-    Rigidbody _rb;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        _rb = GetComponent<Rigidbody>();
-        
-    }
+    [SerializeField] float moveSpeed = 10f;
+    [SerializeField] float turnSpeed = 120f;
 
-    // Update is called once per frame
     void Update()
     {
-        float x = 0f;
-        float z = 0f;
+        float moveInput = 0f;
+        float turnInput = 0f;
 
-        if (Input.GetKey(KeyCode.W)) z += 1f;
-        if (Input.GetKey(KeyCode.S)) z -= 1f;
-        if (Input.GetKey(KeyCode.A)) x -= 1f;
-        if (Input.GetKey(KeyCode.D)) x += 1f;
+        // Forward / Backward
+        if (Input.GetKey(KeyCode.W)) moveInput = 1f;
+        if (Input.GetKey(KeyCode.S)) moveInput = -1f;
 
-        Vector3 direction = new Vector3(x, 0f, z).normalized;
+        // Turning
+        if (Input.GetKey(KeyCode.A)) turnInput = -1f;
+        if (Input.GetKey(KeyCode.D)) turnInput = 1f;
 
-        _rb.AddForce(direction * moveSpeed, ForceMode.Force);
+        // Move forward/backward
+        transform.Translate(Vector3.forward * moveInput * moveSpeed * Time.deltaTime);
+
+        // Turn (only while moving, feels more like a car)
+        if (moveInput != 0f)
+        {
+            float direction = moveInput > 0 ? 1f : -1f;
+            transform.Rotate(Vector3.up * turnInput * turnSpeed * direction * Time.deltaTime);
+        }
     }
 }
