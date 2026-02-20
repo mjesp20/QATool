@@ -25,15 +25,15 @@ public static class QAToolTelemetryLoader
                 }
                 catch (Exception e)
                 {
-                    Debug.LogWarning($"Failed to parse line: {line}\nError: {e.Message}");
+                    //Debug.LogWarning($"Failed to parse line: {line}\nError: {e.Message}");
                 }
             }
 
-            Debug.Log($"Loaded {positions.Count} positions from {filePath}");
+            //Debug.Log($"Loaded {positions.Count} positions from {filePath}");
         }
         catch (Exception e)
         {
-            Debug.LogError($"Failed to read telemetry file: {e.Message}");
+            //Debug.LogError($"Failed to read telemetry file: {e.Message}");
         }
 
         return positions;

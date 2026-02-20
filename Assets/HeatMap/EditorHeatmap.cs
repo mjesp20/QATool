@@ -48,7 +48,7 @@ public class EditorHeatmap : MonoBehaviour
 
         if (!Directory.Exists(folderPath))
         {
-            Debug.LogWarning("Heatmap folder not found: " + folderPath);
+            //Debug.LogWarning("Heatmap folder not found: " + folderPath);
             return;
         }
 
@@ -58,7 +58,7 @@ public class EditorHeatmap : MonoBehaviour
         foreach (string file in files)
         {
             List<Vector3> positions = QAToolTelemetryLoader.LoadPositions(file);
-            Debug.Log($"{Path.GetFileName(file)}: {positions.Count} positions");
+            //Debug.Log($"{Path.GetFileName(file)}: {positions.Count} positions");
 
             foreach (var position in positions)
             {
@@ -74,7 +74,7 @@ public class EditorHeatmap : MonoBehaviour
             }
         }
 
-        Debug.Log($"Heatmap loaded: {heatmap.Count} cells");
+        //Debug.Log($"Heatmap loaded: {heatmap.Count} cells");
     }
 
     void OnDrawGizmos()
@@ -105,7 +105,7 @@ public class EditorHeatmap : MonoBehaviour
             float normalized = Mathf.Log(kvp.Value - logMin + 2f) / Mathf.Log(logMax - logMin + 2f);
             normalized = Mathf.Pow(normalized, contrast);
 
-            Color color = Color.Lerp(Color.green, Color.red, normalized);
+            Color color = Color.Lerp(Color.blue, Color.red, normalized);
 
             Vector3 center = new Vector3(
                 kvp.Key.x * cellSize + cellSize / 2f,
