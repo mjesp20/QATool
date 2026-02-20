@@ -17,12 +17,18 @@ using static System.Runtime.CompilerServices.RuntimeHelpers;
 public class QAToolPlayerTracker : MonoBehaviour
 {
     [SerializeField]
-    float trackEverySecond = 1;
+    public float dataPointsPerSecond = 10f;
+    
+    
+    private float timerFrequency = 1f;
 
     private float timer;
+    private float playSessionDuration;
     private string filePath;
     private Vector3 pos;
     private KeyCode keyCode;
+    private Vector3 lookingDirection;
+    private float delta;
 
     void Awake()
     {
@@ -46,17 +52,23 @@ public class QAToolPlayerTracker : MonoBehaviour
     void Start()
     {
         keyCode = (KeyCode)System.Enum.Parse(typeof(KeyCode), QAToolGlobals.feedbackKeyCode, true);
+        timerFrequency = 1f / dataPointsPerSecond;
     }
 
     // Update is called once per frame
     void Update()
     {
-        timer += Time.deltaTime;
-
-        if (timer >= trackEverySecond)
+        float delta = Time.deltaTime;
+        playSessionDuration += delta;
+        timer += delta;
+        
+        if (timer >= timerFrequency)
         {
-            timer = 0;
+            timer -= timerFrequency;
             pos = transform.position;
+            lookingDirection = transform.forward;
+            
+            
 
             PrintJSON(JSONType.Movement, new Dictionary<string, object>
             {

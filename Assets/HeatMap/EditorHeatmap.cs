@@ -78,43 +78,77 @@ public class EditorHeatmap : MonoBehaviour
     }
 
     void OnDrawGizmos()
+{
+    if (heatmap == null || heatmap.Count == 0)
+        return;
+
+#if UNITY_EDITOR
+    Camera cam = UnityEditor.SceneView.lastActiveSceneView?.camera;
+#else
+    Camera cam = Camera.current;
+#endif
+
+    if (cam == null)
+        return;
+
+    int minCount = int.MaxValue;
+    int maxCount = 0;
+
+    foreach (var kvp in heatmap)
     {
-        if (heatmap == null || heatmap.Count == 0)
-            return;
-
-        int minCount = int.MaxValue;
-        int maxCount = 0;
-
-        foreach (var kvp in heatmap)
-        {
-            if (kvp.Value < drawThreshold) continue;
-            minCount = Mathf.Min(minCount, kvp.Value);
-            maxCount = Mathf.Max(maxCount, kvp.Value);
-        }
-
-        if (minCount == int.MaxValue) return;
-        if (minCount == maxCount) maxCount = minCount + 1;
-
-        int logMin = Mathf.Max(1, minCount);
-        int logMax = Mathf.Max(logMin + 1, maxCount);
-
-        foreach (var kvp in heatmap)
-        {
-            if (kvp.Value < drawThreshold) continue;
-
-            float normalized = Mathf.Log(kvp.Value - logMin + 2f) / Mathf.Log(logMax - logMin + 2f);
-            normalized = Mathf.Pow(normalized, contrast);
-
-            Color color = Color.Lerp(Color.blue, Color.red, normalized);
-
-            Vector3 center = new Vector3(
-                kvp.Key.x * cellSize + cellSize / 2f,
-                kvp.Key.y * cellSize + cellSize / 2f,
-                kvp.Key.z * cellSize + cellSize / 2f
-            );
-
-            Gizmos.color = new Color(color.r, color.g, color.b, opacity);
-            Gizmos.DrawCube(center, Vector3.one * cellSize);
-        }
+        if (kvp.Value < drawThreshold) continue;
+        minCount = Mathf.Min(minCount, kvp.Value);
+        maxCount = Mathf.Max(maxCount, kvp.Value);
     }
+
+    if (minCount == int.MaxValue) return;
+    if (minCount == maxCount) maxCount = minCount + 1;
+
+    int logMin = Mathf.Max(1, minCount);
+    int logMax = Mathf.Max(logMin + 1, maxCount);
+
+    // 🔥 Create sortable list
+    var cells = new List<KeyValuePair<Vector3Int, int>>(heatmap);
+
+    // 🔥 Sort by distance from camera (farthest first!)
+    cells.Sort((a, b) =>
+    {
+        Vector3 centerA = new Vector3(
+            a.Key.x * cellSize + cellSize / 2f,
+            a.Key.y * cellSize + cellSize / 2f,
+            a.Key.z * cellSize + cellSize / 2f
+        );
+
+        Vector3 centerB = new Vector3(
+            b.Key.x * cellSize + cellSize / 2f,
+            b.Key.y * cellSize + cellSize / 2f,
+            b.Key.z * cellSize + cellSize / 2f
+        );
+
+        float distA = Vector3.Distance(cam.transform.position, centerA);
+        float distB = Vector3.Distance(cam.transform.position, centerB);
+
+        Color color = Color.Lerp(Color.blue, Color.red, normalized);
+        return distB.CompareTo(distA); // Farthest first
+    });
+
+    foreach (var kvp in cells)
+    {
+        if (kvp.Value < drawThreshold) continue;
+
+        float normalized = Mathf.Log(kvp.Value - logMin + 2f) / Mathf.Log(logMax - logMin + 2f);
+        normalized = Mathf.Pow(normalized, contrast);
+
+        Color color = Color.Lerp(Color.green, Color.red, normalized);
+
+        Vector3 center = new Vector3(
+            kvp.Key.x * cellSize + cellSize / 2f,
+            kvp.Key.y * cellSize + cellSize / 2f,
+            kvp.Key.z * cellSize + cellSize / 2f
+        );
+
+        Gizmos.color = new Color(color.r, color.g, color.b, opacity);
+        Gizmos.DrawCube(center, Vector3.one * cellSize);
+    }
+}
 }
