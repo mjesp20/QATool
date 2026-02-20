@@ -16,8 +16,11 @@ public class QAToolPlayerTracker : MonoBehaviour
     private float timerFrequency = 1f;
 
     private float timer;
+    private float playSessionDuration;
     private string filePath;
     private Vector3 pos;
+    private Vector3 lookingDirection;
+    private float delta;
 
     void Awake()
     {
@@ -46,24 +49,34 @@ public class QAToolPlayerTracker : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        timer += Time.deltaTime;
-
+        float delta = Time.deltaTime;
+        playSessionDuration += delta;
+        timer += delta;
+        
         if (timer >= timerFrequency)
         {
-            timer = 0;
+            timer -= timerFrequency;
             pos = transform.position;
+            lookingDirection = transform.forward;
+            
+            
 
-
-
-            // Line you want to write (example JSON line)
             string jsonLine =
-                $"{{ \"time\": \"{DateTime.Now:o}\"," +
-                $" \"playerID\": \"1\"," +
-                $" \"PlayerPosition\": {{" +
-                $" \"x\": {pos.x.ToString(CultureInfo.InvariantCulture)}," +
-                $" \"y\": {pos.y.ToString(CultureInfo.InvariantCulture)}," +
-                $" \"z\": {pos.z.ToString(CultureInfo.InvariantCulture)}" +
-                $" }} }}";
+                "{" +
+                $"\"time\": \"{DateTime.UtcNow:o}\"," +
+                $"\"PlaySessionTimer\": {playSessionDuration.ToString(CultureInfo.InvariantCulture)}," +
+                $"\"playerID\": 1," +
+                $"\"PlayerPosition\": {{" +
+                $"\"x\": {pos.x.ToString(CultureInfo.InvariantCulture)}," +
+                $"\"y\": {pos.y.ToString(CultureInfo.InvariantCulture)}," +
+                $"\"z\": {pos.z.ToString(CultureInfo.InvariantCulture)}" +
+                "}," +
+                $"\"PlayerLookingDirection\": {{" +
+                $"\"x\": {lookingDirection.x.ToString(CultureInfo.InvariantCulture)}," +
+                $"\"y\": {lookingDirection.y.ToString(CultureInfo.InvariantCulture)}," +
+                $"\"z\": {lookingDirection.z.ToString(CultureInfo.InvariantCulture)}" +
+                "}" +
+                "}";
 
 
             // Append line and automatically close the file
