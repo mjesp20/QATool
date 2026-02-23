@@ -8,6 +8,9 @@ public class QAToolWindow : EditorWindow
 {
     private static List<List<Vector3>> allTrails = new List<List<Vector3>>();
     private string filterCriteria = "";
+    private Rect popupButtonRect;
+    
+    
 
     void OnEnable()
     {
@@ -32,6 +35,16 @@ public class QAToolWindow : EditorWindow
     {
         //GUILayout.Label("QA Tool", EditorStyles.boldLabel);
 
+        GUILayout.Space(10);
+        GUILayout.Label("QA Tool", EditorStyles.boldLabel);
+
+        if (GUILayout.Button("Filters"))
+        {
+            QAToolFilterWindow.ShowWindow();
+        }
+
+        if (Event.current.type == EventType.Repaint)
+            popupButtonRect = GUILayoutUtility.GetLastRect();
 
         if (GUILayout.Button("Reload Player Path Data"))
         {
@@ -106,3 +119,12 @@ public class QAToolWindow : EditorWindow
     }*/
 
 }
+
+
+
+[System.Serializable]
+public class PlayerData
+{
+    public Vector3 position;
+}
+
