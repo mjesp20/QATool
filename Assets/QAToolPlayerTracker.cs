@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -29,6 +30,7 @@ public class QAToolPlayerTracker : MonoBehaviour
     private KeyCode keyCode;
     private Vector3 lookingDirection;
     private float delta;
+    Button submitButton;
 
     void Awake()
     {
@@ -51,7 +53,7 @@ public class QAToolPlayerTracker : MonoBehaviour
     }
     void Start()
     {
-        keyCode = (KeyCode)System.Enum.Parse(typeof(KeyCode), QAToolGlobals.feedbackKeyCode, true);
+        keyCode = (KeyCode)Enum.Parse(typeof(KeyCode), QAToolGlobals.feedbackKeyCode, true);
         timerFrequency = 1f / dataPointsPerSecond;
     }
 
@@ -61,85 +63,39 @@ public class QAToolPlayerTracker : MonoBehaviour
         float delta = Time.deltaTime;
         playSessionDuration += delta;
         timer += delta;
-        
+
         if (timer >= timerFrequency)
         {
             timer -= timerFrequency;
-            pos = transform.position;
-            lookingDirection = transform.forward;
-            
-            
-
-            PrintJSON(JSONType.Movement, new Dictionary<string, object>
-            {
-                { "PlayerPosition", new Dictionary<string, object>
-                    {
-                        { "x", pos.x },
-                        { "y", pos.y },
-                        { "z", pos.z }
-                    }
-                }
-            });
+            PrintJSON(QAToolJSONTypes.Movement);
         }
         if (Input.GetKeyDown(keyCode))
         {
             CreateFeedbackNotesWindow();
         }
     }
-    
 
-    void PrintJSON(JSONType type, Dictionary<string, object> dict)
+
+    public void PrintJSON(QAToolJSONTypes type, Dictionary<string, object> args = null)
     {
-        Dictionary<string,object> commonValues = new Dictionary<string, object>
-        {
-            { "type", type.ToString() },
-            { "time", 1 },
-            { "playerID",1 }
-        };
+        var entry = new Dictionary<string, object>
+            {
+                { "PlayerPosition", new { transform.position.x, transform.position.y, transform.position.z } },
+                { "type", type.ToString() },
+                { "time", playSessionDuration },
+                { "playerID", 1 }
+            };
 
-        foreach (KeyValuePair<string,object> item in commonValues)
-        {
-            dict[item.Key] = item.Value;
-        }
+        if (args != null)
+            entry["args"] = args;
 
-        string JSONLine = ParseJSON(dict);
-        File.AppendAllText(filePath, JSONLine + Environment.NewLine);
-    }
-
-    string ParseJSON(Dictionary<string, object> dict)
-    {
-        List<string> values = new List<string>();
-        foreach (KeyValuePair<string,object> item in dict)
-        {
-            string key = item.Key;
-            string value = ObjectToString(item.Value);
-            values.Add("{" + key + ":" + value + "}");
-        }
-
-        return "{" + string.Join(", ", values) + "}";
-    }
-
-    string ObjectToString(object obj)
-    {
-        return obj switch
-        {
-            Dictionary<string, object> nested => ParseJSON(nested),
-            float f => f.ToString(CultureInfo.InvariantCulture),
-            double d => d.ToString(CultureInfo.InvariantCulture),
-            int i => i.ToString(),
-            bool b => b.ToString().ToLower(),
-            null => "null",
-            _ => $"\"{obj}\""
-        };
+        string jsonLine = JsonConvert.SerializeObject(entry);
+        File.AppendAllText(filePath, jsonLine + Environment.NewLine);
     }
 
 
-    enum JSONType
-    {
-        Movement,
-        FeedbackNote,
-        Event
-    }
+
+
 
     void CreateFeedbackNotesWindow()
     {
@@ -184,16 +140,17 @@ public class QAToolPlayerTracker : MonoBehaviour
         inputField.textComponent = text;
         inputField.placeholder = placeholder;
 
-        Button button = new GameObject("Button").AddComponent<Button>();
-        button.AddComponent<RectTransform>();
-        button.GetComponent<RectTransform>().sizeDelta = new Vector2(300, 300);
-        button.onClick.AddListener(() => { SubmitNote(inputField); });
-        button.AddComponent<Image>();
-        button.transform.parent = canvas.gameObject.transform;
+        submitButton = new GameObject("Button").AddComponent<Button>();
+        submitButton.AddComponent<RectTransform>();
+        submitButton.GetComponent<RectTransform>().sizeDelta = new Vector2(300, 300);
+        submitButton.onClick.AddListener(() => { SubmitNote(inputField); });
+        submitButton.AddComponent<Image>();
+        submitButton.transform.parent = canvas.gameObject.transform;
     }
     public void SubmitNote(TMP_InputField inputField)
     {
-        print(inputField.text);
-        PrintJSON(JSONType.Movement, new Dictionary<string, object>());
+        PrintJSON(QAToolJSONTypes.FeedbackNote, new Dictionary<string, object> { { "note", inputField.text } });
+        Destroy(submitButton.gameObject);
+        Destroy(inputField.gameObject);
     }
 }

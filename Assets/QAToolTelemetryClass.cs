@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+[Serializable]
 public class QAToolTelemetryClass
 {
     [Serializable]
@@ -11,7 +12,6 @@ public class QAToolTelemetryClass
         public float y;
         public float z;
 
-
         public Vector3 ToVector3()
         {
             return new Vector3(x, y, z);
@@ -19,10 +19,12 @@ public class QAToolTelemetryClass
     }
 
     [Serializable]
-    public class Root
+    public class Entry
     {
-        public string time;
-        public string playerID;
         public PlayerPosition PlayerPosition;
+        public string type;
+        public float time;
+        public int playerID;
+        public Dictionary<string, object> args;
     }
 }

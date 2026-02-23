@@ -5,7 +5,6 @@ using UnityEngine;
 [ExecuteAlways]
 public class EditorHeatmap : MonoBehaviour
 {
-    string folderPath = QAToolGlobals.folderPath;
     [Range(0f, 2f)]
     public float cellSize = 1f;
     public float heightOffset = 0.02f;
@@ -46,33 +45,22 @@ public class EditorHeatmap : MonoBehaviour
 
         heatmap.Clear();
 
-        if (!Directory.Exists(folderPath))
+        List<Vector3> positions = QAToolTelemetryLoader.GetAllPositions();
+        Debug.Log($"{positions.Count} positions");
+
+        foreach (var position in positions)
         {
-            //Debug.LogWarning("Heatmap folder not found: " + folderPath);
-            return;
+            Vector3Int cell = new Vector3Int(
+                Mathf.FloorToInt(position.x / cellSize),
+                Mathf.FloorToInt(position.y / cellSize),
+                Mathf.FloorToInt(position.z / cellSize)
+            );
+
+            if (!heatmap.ContainsKey(cell))
+                heatmap[cell] = 0;
+            heatmap[cell]++;
         }
-
-        string[] files = Directory.GetFiles(folderPath, "*.jsonl");
-        Debug.Log($"Found {files.Length} jsonl files in {folderPath}");
-
-        foreach (string file in files)
-        {
-            List<Vector3> positions = QAToolTelemetryLoader.LoadPositions(file);
-            //Debug.Log($"{Path.GetFileName(file)}: {positions.Count} positions");
-
-            foreach (var position in positions)
-            {
-                Vector3Int cell = new Vector3Int(
-                    Mathf.FloorToInt(position.x / cellSize),
-                    Mathf.FloorToInt(position.y / cellSize),
-                    Mathf.FloorToInt(position.z / cellSize)
-                );
-
-                if (!heatmap.ContainsKey(cell))
-                    heatmap[cell] = 0;
-                heatmap[cell]++;
-            }
-        }
+        
 
         //Debug.Log($"Heatmap loaded: {heatmap.Count} cells");
     }

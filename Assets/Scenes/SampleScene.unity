@@ -586,9 +586,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ff31161d776fa543a6f4ddbadb16c97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cellSize: 1.851
+  cellSize: 1.844
   heightOffset: 0
-  opacity: 0.695
+  opacity: 0.869
   drawThreshold: 2
   contrast: 1
 --- !u!1 &719672431
@@ -620,6 +620,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86b541e6e7195304482f0c1170f76ee3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  positions: []
+  filePath: 
+  i: 0
 --- !u!4 &719672433
 Transform:
   m_ObjectHideFlags: 0

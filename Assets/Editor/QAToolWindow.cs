@@ -6,7 +6,6 @@ using System.IO;
 
 public class QAToolWindow : EditorWindow
 {
-    private List<PlayerData> playerDataList = new List<PlayerData>();
     private static List<List<Vector3>> allTrails = new List<List<Vector3>>();
     private string filterCriteria = "";
 
@@ -14,7 +13,7 @@ public class QAToolWindow : EditorWindow
     {
         // Subscribe to the SceneView so we can draw gizmos
         SceneView.duringSceneGui += OnSceneGUI;
-        LoadPlayerTelemetryData();
+        //LoadPlayerTelemetryData();
     }
 
     void OnDisable()
@@ -36,12 +35,7 @@ public class QAToolWindow : EditorWindow
 
         if (GUILayout.Button("Reload Player Path Data"))
         {
-            LoadPlayerTelemetryData();
-        }
-
-        if (GUILayout.Button("Show Player Trails"))
-        {
-            ShowPlayerTrails();
+            //LoadPlayerTelemetryData();
         }
 
         EditorGUI.BeginChangeCheck();
@@ -50,9 +44,11 @@ public class QAToolWindow : EditorWindow
         QAToolGlobals.showFeedbackNotes = EditorGUILayout.Toggle("Show Feedback Notes", QAToolGlobals.showFeedbackNotes);
 
         QAToolGlobals.feedbackKeyCode = EditorGUILayout.TextArea(QAToolGlobals.feedbackKeyCode);
+
+
         if (EditorGUI.EndChangeCheck())
         {
-            LoadPlayerTelemetryData();
+            //LoadPlayerTelemetryData();
             SceneView.RepaintAll();
         }
 
@@ -85,7 +81,7 @@ public class QAToolWindow : EditorWindow
         }
     }
 
-
+    /*
     public void LoadPlayerTelemetryData()
     {
         allTrails.Clear();
@@ -98,7 +94,7 @@ public class QAToolWindow : EditorWindow
 
         foreach (var file in Directory.GetFiles(QAToolGlobals.folderPath))
         {
-            List<Vector3> positions = QAToolTelemetryLoader.LoadPositions(file);
+            List<Vector3> positions = QAToolTelemetryLoader.ExtractPositions(QAToolTelemetryLoader.LoadFromFile(file));
             if (positions != null && positions.Count > 0)
             {
                 allTrails.Add(positions);
@@ -107,18 +103,6 @@ public class QAToolWindow : EditorWindow
 
         Debug.Log($"Loaded {allTrails.Count} trails.");
         SceneView.RepaintAll();
-    }
+    }*/
 
-
-    private void ShowPlayerTrails()
-    {
-        LoadPlayerTelemetryData();
-        Debug.Log("Showing player trails.");
-    }
-}
-
-[System.Serializable]
-public class PlayerData
-{
-    public Vector3 position;
 }
