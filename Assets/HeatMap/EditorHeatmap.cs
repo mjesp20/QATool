@@ -128,7 +128,7 @@ public class EditorHeatmap : MonoBehaviour
         float distA = Vector3.Distance(cam.transform.position, centerA);
         float distB = Vector3.Distance(cam.transform.position, centerB);
 
-        Color color = Color.Lerp(Color.blue, Color.red, normalized);
+        //Color color = Color.Lerp(Color.blue, Color.red, normalized);
         return distB.CompareTo(distA); // Farthest first
     });
 

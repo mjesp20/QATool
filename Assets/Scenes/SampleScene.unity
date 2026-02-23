@@ -181,7 +181,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 10
-  turnSpeed: 100
+  turnSpeed: 120
 --- !u!65 &265560143
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -586,10 +586,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ff31161d776fa543a6f4ddbadb16c97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cellSize: 2
+  cellSize: 1.851
   heightOffset: 0
-  opacity: 0.642
-  drawThreshold: 1
+  opacity: 0.695
+  drawThreshold: 2
   contrast: 1
 --- !u!1 &719672431
 GameObject:
