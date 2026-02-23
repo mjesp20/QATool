@@ -586,10 +586,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ff31161d776fa543a6f4ddbadb16c97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cellSize: 1.844
+  cellSize: 0.645
   heightOffset: 0
   opacity: 0.869
-  drawThreshold: 2
+  drawThreshold: 1
   contrast: 1
 --- !u!1 &719672431
 GameObject:

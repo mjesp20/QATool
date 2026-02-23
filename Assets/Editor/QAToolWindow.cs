@@ -1,8 +1,9 @@
 using System;
-using UnityEditor;
-using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
 
 public class QAToolWindow : EditorWindow
 {
@@ -13,7 +14,7 @@ public class QAToolWindow : EditorWindow
     {
         // Subscribe to the SceneView so we can draw gizmos
         SceneView.duringSceneGui += OnSceneGUI;
-        //LoadPlayerTelemetryData();
+        //ytDrawPlayerTrails();
     }
 
     void OnDisable()
@@ -35,7 +36,7 @@ public class QAToolWindow : EditorWindow
 
         if (GUILayout.Button("Reload Player Path Data"))
         {
-            //LoadPlayerTelemetryData();
+            DrawPlayerTrails();
         }
 
         EditorGUI.BeginChangeCheck();
@@ -48,41 +49,26 @@ public class QAToolWindow : EditorWindow
 
         if (EditorGUI.EndChangeCheck())
         {
-            //LoadPlayerTelemetryData();
+            DrawPlayerTrails();
             SceneView.RepaintAll();
         }
-
     }
-
-
-    private void OnSceneGUI(SceneView sceneView)
+    private static void OnSceneGUI(SceneView sceneView)
     {
-        if (!QAToolGlobals.showGhostTrails) return;
-        if (allTrails == null || allTrails.Count == 0) return;
-
-        Color[] trailColors = { Color.red, Color.cyan, Color.green, Color.yellow, Color.magenta };
-
-        for (int t = 0; t < allTrails.Count; t++)
-        {
-            List<Vector3> trail = allTrails[t];
-            if (trail == null || trail.Count == 0) continue;
-
-            Handles.color = trailColors[t % trailColors.Length];
-
-            foreach (Vector3 pos in trail)
-            {
-                Handles.SphereHandleCap(0, pos, Quaternion.identity, 0.2f, EventType.Repaint);
-            }
-
-            for (int i = 0; i < trail.Count - 1; i++)
-            {
-                Handles.DrawLine(trail[i], trail[i + 1]);
-            }
-        }
+        DrawPlayerTrails();
+        DrawFeedbackNotes();
     }
 
-    /*
-    public void LoadPlayerTelemetryData()
+    public static void DrawFeedbackNotes()
+    {
+        if (!QAToolGlobals.showFeedbackNotes)
+        {
+            return;   
+        }
+        Handles.Label(Vector3.one,new GUIContent("waow"));
+    }
+
+    public static void DrawPlayerTrails()
     {
         allTrails.Clear();
 
@@ -92,17 +78,41 @@ public class QAToolWindow : EditorWindow
             return;
         }
 
-        foreach (var file in Directory.GetFiles(QAToolGlobals.folderPath))
+        var entriesByFile = QAToolTelemetryLoader.GetAllPositionsByFile();
+
+        foreach (var fileEntries in entriesByFile)
         {
-            List<Vector3> positions = QAToolTelemetryLoader.ExtractPositions(QAToolTelemetryLoader.LoadFromFile(file));
-            if (positions != null && positions.Count > 0)
+            var positions = fileEntries.Select(entry => entry.PlayerPosition.ToVector3()).ToList();
+
+            if (positions.Count > 0)
             {
                 allTrails.Add(positions);
             }
         }
 
-        Debug.Log($"Loaded {allTrails.Count} trails.");
-        SceneView.RepaintAll();
-    }*/
+        if (allTrails.Count == 0) return;
 
+        Color[] trailColors =
+        {
+            Color.red, Color.cyan, Color.green, Color.yellow, Color.magenta
+        };
+
+        for (int t = 0; t < allTrails.Count; t++)
+        {
+            var trail = allTrails[t];
+            if (trail == null || trail.Count == 0) continue;
+
+            Handles.color = trailColors[t % trailColors.Length];
+
+            for (int i = 0; i < trail.Count; i++)
+            {
+                Handles.SphereHandleCap(0, trail[i], Quaternion.identity, 0.2f, EventType.Repaint);
+            }
+
+            for (int i = 0; i < trail.Count - 1; i++)
+            {
+                Handles.DrawLine(trail[i], trail[i + 1]);
+            }
+        }
+    }
 }
