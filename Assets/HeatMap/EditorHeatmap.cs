@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 [ExecuteAlways]
@@ -45,7 +46,9 @@ public class EditorHeatmap : MonoBehaviour
 
         heatmap.Clear();
 
-        List<Vector3> positions = QAToolTelemetryLoader.GetAllPositions();
+        List<Vector3> positions = QAToolTelemetryLoader.GetAllEntries().Select(entry => entry.PlayerPosition.ToVector3()).ToList();
+
+
         Debug.Log($"{positions.Count} positions");
 
         foreach (var position in positions)

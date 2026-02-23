@@ -63,11 +63,11 @@ public static class QAToolTelemetryLoader
     #endregion
 
     /// <summary>
-    /// Gets a list of all positions by specified JSONType in the folder. Summarizes from ALL files
+    /// Gets a list of all Entries by specified JSONType in the folder. Summarizes from ALL files
     /// </summary>
-    public static List<Vector3> GetAllPositions(QAToolJSONTypes type = QAToolJSONTypes.None)
+    public static List<QAToolTelemetryClass.Entry> GetAllEntries(QAToolJSONTypes type = QAToolJSONTypes.None)
     {
-        List<Vector3> positions = new List<Vector3>();
+        List<QAToolTelemetryClass.Entry> entries  = new List<QAToolTelemetryClass.Entry>();
         foreach (List<QAToolTelemetryClass.Entry> entryList in LoadFromFolder())
         {
             foreach (QAToolTelemetryClass.Entry entry in entryList)
@@ -78,11 +78,32 @@ public static class QAToolTelemetryLoader
 
                 if (type == QAToolJSONTypes.None || entryType == type)
                 {
-                    positions.Add(entry.PlayerPosition.ToVector3());
+                    entries.Add(entry);
                 }
             }
         }
-        return positions;
+        return entries;
+    }
+
+    public static List<List<QAToolTelemetryClass.Entry>> GetAllPositionsByFile(QAToolJSONTypes type = QAToolJSONTypes.None)
+    {
+        List<List<QAToolTelemetryClass.Entry>> entriesByFile = new List<List<QAToolTelemetryClass.Entry>>();
+        foreach (List<QAToolTelemetryClass.Entry> entryList in LoadFromFolder())
+        {
+            List<QAToolTelemetryClass.Entry> fileEntries = new List<QAToolTelemetryClass.Entry>();
+            foreach (QAToolTelemetryClass.Entry entry in entryList)
+            {
+                if (entry == null) continue;
+                QAToolJSONTypes entryType = (QAToolJSONTypes)Enum.Parse(typeof(QAToolJSONTypes), entry.type);
+                if (type == QAToolJSONTypes.None || entryType == type)
+                {
+                    fileEntries.Add(entry);
+                }
+            }
+            if (fileEntries.Count > 0)
+                entriesByFile.Add(fileEntries);
+        }
+        return entriesByFile;
     }
 
 }
