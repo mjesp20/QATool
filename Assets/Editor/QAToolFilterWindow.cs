@@ -21,8 +21,8 @@ public class QAToolFilterWindow : EditorWindow
             treeViewState = new TreeViewState();
 
         var headerState = PlayerTreeView.CreateDefaultMultiColumnHeaderState(position.width);
-        var multiColumnHeader = new MultiColumnHeader(headerState);
-        multiColumnHeader.canSort = true;
+        var multiColumnHeader = new TriStateMultiColumnHeader(headerState);
+        // remove: multiColumnHeader.canSort = false;
 
         treeView = new PlayerTreeView(treeViewState, multiColumnHeader);
     }
@@ -46,47 +46,29 @@ public class PlayerTreeView : TreeView
     private int[] headerTriStates;
     public List<PlayerRowData> data = new List<PlayerRowData>();
 
-    // JSON columns to display
     private string[] jsonColumns = new string[] { "Type", "TotalTime", "PositionsCount", "ArgsCount" };
 
     public PlayerTreeView(TreeViewState state, MultiColumnHeader header) : base(state, header)
-{
-    rowHeight = 20;
-    showAlternatingRowBackgrounds = true;
-    headerTriStates = new int[triStateColumnCount];
-
-    string folderPath = QAToolGlobals.folderPath;
-
-    if (Directory.Exists(folderPath))
     {
-        // 🔹 Still get file list exactly like original system
-        string[] filePaths = Directory.GetFiles(folderPath);
+        rowHeight = 20;
+        showAlternatingRowBackgrounds = true;
+        headerTriStates = new int[triStateColumnCount];
 
-        for (int i = 0; i < filePaths.Length; i++)
+        List<List<QAToolTelemetryClass.Entry>> loadedData = QAToolTelemetryLoader.LoadFromFolder();
+        foreach (List<QAToolTelemetryClass.Entry> entries in loadedData)
         {
-            string playerName = Path.GetFileNameWithoutExtension(filePaths[i]);
+            if (entries == null || entries.Count == 0) continue;
 
-            List<QAToolTelemetryClass.Entry> entries = new List<QAToolTelemetryClass.Entry>();
-
-            // 🔥 Re-parse manually using allowed ParseLine()
-            foreach (string line in File.ReadLines(filePaths[i]))
-            {
-                var parsed = QAToolTelemetryLoader.ParseLine(line);
-                if (parsed != null)
-                    entries.Add(parsed);
-            }
-
-            // ---- Compute summary values ----
             float totalTime = 0f;
             List<string> types = new List<string>();
             int positionsCount = 0;
             int argsCount = 0;
 
-            foreach (var entry in entries)
+            foreach (QAToolTelemetryClass.Entry entry in entries)
             {
                 if (entry == null) continue;
 
-                totalTime += entry.time;
+                totalTime = Mathf.Max(totalTime, entry.time);
 
                 if (!string.IsNullOrEmpty(entry.type) &&
                     !types.Contains(entry.type) &&
@@ -101,6 +83,8 @@ public class PlayerTreeView : TreeView
                 argsCount += entry.args?.Count ?? 0;
             }
 
+            string playerName = entries[0]?.playerID.ToString() ?? "Unknown";
+
             var row = new PlayerRowData(playerName, entries)
             {
                 jsonValues = new object[]
@@ -114,18 +98,17 @@ public class PlayerTreeView : TreeView
 
             data.Add(row);
         }
+        (header as TriStateMultiColumnHeader).onTriStateColumnClicked = OverrideAllRowsInColumn;
+        Reload();
     }
-
-    Reload();
-}
 
     protected override TreeViewItem BuildRoot()
     {
         var root = new TreeViewItem { id = 0, depth = -1 };
+        var items = new List<TreeViewItem>();
 
-        var items = new List<TreeViewItem> { new TreeViewItem { id = 1, depth = 0, displayName = "HeaderRow" } };
         for (int i = 0; i < data.Count; i++)
-            items.Add(new TreeViewItem { id = i + 2, depth = 0 });
+            items.Add(new TreeViewItem { id = i + 1, depth = 0 });
 
         SetupParentsAndChildrenFromDepths(root, items);
         return root;
@@ -133,55 +116,32 @@ public class PlayerTreeView : TreeView
 
     protected override void RowGUI(RowGUIArgs args)
     {
-        int rowIndex = args.item.id;
+        int dataIndex = args.item.id - 1; // id starts at 1 now
+
+        if (dataIndex < 0 || dataIndex >= data.Count) return;
+
+        var row = data[dataIndex];
 
         for (int i = 0; i < args.GetNumVisibleColumns(); i++)
         {
             Rect cellRect = args.GetCellRect(i);
 
-            if (rowIndex == 1)
+            if (i == 0)
+                EditorGUI.LabelField(cellRect, row.playerName);
+            else if (i <= triStateColumnCount)
             {
-                // Header row
-                if (i == 0)
-                    EditorGUI.LabelField(cellRect, "Player Name");
-                else if (i <= triStateColumnCount)
-                    if (GUI.Button(cellRect, $"Tri-State {i}"))
-                        OverrideAllRowsInColumn(i - 1);
-                    else
-                    {
-                        int jsonColIndex = i - 1 - triStateColumnCount;
-                        if (jsonColIndex >= 0 && jsonColIndex < jsonColumns.Length)
-                            EditorGUI.LabelField(cellRect, jsonColumns[jsonColIndex]);
-                    }
+                int triIndex = i - 1;
+                if (GUI.Button(cellRect, GetTriStateSymbol(row.triStates[triIndex])))
+                    row.triStates[triIndex] = (row.triStates[triIndex] + 1) % 3;
             }
             else
             {
-                int dataIndex = rowIndex - 2;
-
-                if (dataIndex < 0 || dataIndex >= data.Count)
-                    continue; // skip invalid rows
-
-                var row = data[dataIndex];
-
-                if (i == 0)
-                    EditorGUI.LabelField(cellRect, row.playerName);
-                else if (i <= triStateColumnCount)
-                {
-                    int triIndex = i - 1;
-                    if (triIndex >= 0 && triIndex < row.triStates.Length)
-                        if (GUI.Button(cellRect, GetTriStateSymbol(row.triStates[triIndex])))
-                            row.triStates[triIndex] = (row.triStates[triIndex] + 1) % 3;
-                }
-                else
-                {
-                    int jsonIndex = i - 1 - triStateColumnCount;
-                    if (row.jsonValues != null && jsonIndex >= 0 && jsonIndex < row.jsonValues.Length)
-                        EditorGUI.LabelField(cellRect, row.jsonValues[jsonIndex]?.ToString());
-                }
+                int jsonIndex = i - 1 - triStateColumnCount;
+                if (row.jsonValues != null && jsonIndex >= 0 && jsonIndex < row.jsonValues.Length)
+                    EditorGUI.LabelField(cellRect, row.jsonValues[jsonIndex]?.ToString());
             }
         }
-    }
-
+    }   
     private void OverrideAllRowsInColumn(int triIndex)
     {
         headerTriStates[triIndex] = (headerTriStates[triIndex] + 1) % 3;
@@ -192,7 +152,7 @@ public class PlayerTreeView : TreeView
 
     private string GetTriStateSymbol(int state)
     {
-        return state == 0 ? "☐" : state == 1 ? "◩" : "☑";
+        return state == 0 ? "☐" : state == 1 ? "☒" : "☑";
     }
 
     public void PrintTableValues()
@@ -212,7 +172,7 @@ public class PlayerTreeView : TreeView
 
     public static MultiColumnHeaderState CreateDefaultMultiColumnHeaderState(float width)
     {
-        int totalColumns = 1 + triStateColumnCount + 4; // Name + Tri-State + 4 JSON columns
+        int totalColumns = 1 + triStateColumnCount + 4;
         var columns = new MultiColumnHeaderState.Column[totalColumns];
 
         columns[0] = new MultiColumnHeaderState.Column
@@ -247,6 +207,26 @@ public class PlayerTreeView : TreeView
         }
 
         return new MultiColumnHeaderState(columns);
+    }
+}
+
+public class TriStateMultiColumnHeader : MultiColumnHeader
+{
+    public System.Action<int> onTriStateColumnClicked;
+
+    public TriStateMultiColumnHeader(MultiColumnHeaderState state) : base(state) { }
+
+    protected override void ColumnHeaderClicked(MultiColumnHeaderState.Column column, int columnIndex)
+    {
+        if (columnIndex >= 1 && columnIndex <= 4)
+        {
+            onTriStateColumnClicked?.Invoke(columnIndex - 1);
+            // don't call base — this prevents sorting while still receiving the click
+        }
+        else
+        {
+            base.ColumnHeaderClicked(column, columnIndex);
+        }
     }
 }
 
