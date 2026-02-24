@@ -133,11 +133,3 @@ public class QAToolWindow : EditorWindow
     }
 }
 
-
-
-[System.Serializable]
-public class PlayerData
-{
-    public Vector3 position;
-}
-
