@@ -12,14 +12,12 @@ public class QAToolWindow : EditorWindow
 
     void OnEnable()
     {
-        // Subscribe to the SceneView so we can draw gizmos
         SceneView.duringSceneGui += OnSceneGUI;
-        //ytDrawPlayerTrails();
+        //DrawPlayerTrails();
     }
 
     void OnDisable()
     {
-        // Always unsubscribe to avoid memory leaks / ghost delegates
         SceneView.duringSceneGui -= OnSceneGUI;
     }
 
@@ -53,19 +51,46 @@ public class QAToolWindow : EditorWindow
             SceneView.RepaintAll();
         }
     }
-    private static void OnSceneGUI(SceneView sceneView)
-    {
-        DrawPlayerTrails();
-        DrawFeedbackNotes();
-    }
+
 
     public static void DrawFeedbackNotes()
     {
-        if (!QAToolGlobals.showFeedbackNotes)
+        if (!QAToolGlobals.showFeedbackNotes) return;
+
+        List<QAToolTelemetryClass.Entry> notes = QAToolTelemetryLoader.GetAllEntries(QAToolJSONTypes.FeedbackNote);
+        foreach (QAToolTelemetryClass.Entry note in notes)
         {
-            return;   
+            Handles.Label(note.PlayerPosition.ToVector3(), note.args["note"].ToString());
         }
-        Handles.Label(Vector3.one,new GUIContent("waow"));
+    }
+
+    static bool trailsDirty = true;
+
+    static void OnSceneGUI(SceneView sceneView)
+    {
+        // do not rebuild every frame
+        if (allTrails.Count > 0)
+        {
+            Color[] trailColors =
+            {
+            Color.red, Color.cyan, Color.green, Color.yellow, Color.magenta
+        };
+
+            for (int t = 0; t < allTrails.Count; t++)
+            {
+                var trail = allTrails[t];
+                if (trail == null || trail.Count == 0) continue;
+
+                Handles.color = trailColors[t % trailColors.Length];
+
+                for (int i = 0; i < trail.Count - 1; i++)
+                {
+                    Handles.DrawLine(trail[i], trail[i + 1]);
+                }
+            }
+        }
+
+        DrawFeedbackNotes();
     }
 
     public static void DrawPlayerTrails()
@@ -90,29 +115,7 @@ public class QAToolWindow : EditorWindow
             }
         }
 
-        if (allTrails.Count == 0) return;
-
-        Color[] trailColors =
-        {
-            Color.red, Color.cyan, Color.green, Color.yellow, Color.magenta
-        };
-
-        for (int t = 0; t < allTrails.Count; t++)
-        {
-            var trail = allTrails[t];
-            if (trail == null || trail.Count == 0) continue;
-
-            Handles.color = trailColors[t % trailColors.Length];
-
-            for (int i = 0; i < trail.Count; i++)
-            {
-                Handles.SphereHandleCap(0, trail[i], Quaternion.identity, 0.2f, EventType.Repaint);
-            }
-
-            for (int i = 0; i < trail.Count - 1; i++)
-            {
-                Handles.DrawLine(trail[i], trail[i + 1]);
-            }
-        }
+        trailsDirty = false; 
+        SceneView.RepaintAll();
     }
 }

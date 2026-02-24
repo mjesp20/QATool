@@ -6,7 +6,7 @@ using UnityEngine;
 [ExecuteAlways]
 public class EditorHeatmap : MonoBehaviour
 {
-    [Range(0f, 2f)]
+    [Range(0f, 5f)]
     public float cellSize = 1f;
     public float heightOffset = 0.02f;
 
