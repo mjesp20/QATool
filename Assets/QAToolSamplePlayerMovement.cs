@@ -5,6 +5,8 @@ public class QAToolSamplePlayerMovement : MonoBehaviour
     [SerializeField] float moveSpeed = 10f;
     [SerializeField] float turnSpeed = 120f;
 
+    int jumpCount = 0;
+    int jumpyjumps = 100;
     void Update()
     {
         float moveInput = 0f;
@@ -17,6 +19,9 @@ public class QAToolSamplePlayerMovement : MonoBehaviour
         // Turning
         if (Input.GetKey(KeyCode.A)) turnInput = -1f;
         if (Input.GetKey(KeyCode.D)) turnInput = 1f;
+
+        if (Input.GetKeyDown(KeyCode.Space)) { QAToolGlobals.setValue("jumps", jumpCount++); QAToolGlobals.setValue("jumpyjumps", jumpyjumps--); }
+
 
         // Move forward/backward
         transform.Translate(Vector3.forward * moveInput * moveSpeed * Time.deltaTime);

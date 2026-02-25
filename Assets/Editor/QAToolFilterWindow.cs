@@ -9,7 +9,7 @@ public class QAToolFilterWindow : EditorWindow
     private TreeViewState treeViewState;
     private PlayerTreeView treeView;
 
-    [MenuItem("Window/QA Tool Filters")]
+
     public static void ShowWindow()
     {
         GetWindow<QAToolFilterWindow>("QA Tool Filters").Show();

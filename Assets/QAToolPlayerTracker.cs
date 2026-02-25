@@ -67,7 +67,7 @@ public class QAToolPlayerTracker : MonoBehaviour
         if (timer >= timerFrequency)
         {
             timer -= timerFrequency;
-            PrintJSON(QAToolJSONTypes.Movement);
+            PrintJSON(QAToolJSONTypes.Movement,QAToolGlobals.flagValues);
         }
         if (Input.GetKeyDown(keyCode))
         {
