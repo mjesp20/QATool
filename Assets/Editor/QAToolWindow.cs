@@ -41,7 +41,10 @@ public class QAToolWindow : EditorWindow
         {
             QAToolFilterWindow.ShowWindow();
         }
-
+        if (GUILayout.Button("Flags"))
+        {
+            QAToolFlagWindow.ShowWindow();
+        }
         if (Event.current.type == EventType.Repaint)
             popupButtonRect = GUILayoutUtility.GetLastRect();
 
