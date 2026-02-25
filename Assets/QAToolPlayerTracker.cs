@@ -18,11 +18,10 @@ using static System.Runtime.CompilerServices.RuntimeHelpers;
 public class QAToolPlayerTracker : MonoBehaviour
 {
     [SerializeField]
-    public float dataPointsPerSecond = 10f;
+    private float dataPointsPerSecond;
     
     
     private float timerFrequency = 1f;
-
     private float timer;
     private float playSessionDuration;
     private string filePath;
@@ -34,6 +33,7 @@ public class QAToolPlayerTracker : MonoBehaviour
 
     void Awake()
     {
+        dataPointsPerSecond = QAToolGlobals.dataPointsPerSecond;
         if (!Directory.Exists(QAToolGlobals.folderPath))
         {
             Directory.CreateDirectory(QAToolGlobals.folderPath);
