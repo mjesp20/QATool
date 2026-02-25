@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -60,6 +61,22 @@ public static class QAToolTelemetryLoader
             return null;
         }
     }
+
+    public static List<QAToolTelemetryClass.Entry> GetFirstEntryFromAllFiles()
+    {
+        List<QAToolTelemetryClass.Entry> entries = new List<QAToolTelemetryClass.Entry>();
+
+        foreach (var filePath in Directory.GetFiles(QAToolGlobals.folderPath))
+        {
+            string firstLine = File.ReadLines(filePath).First();
+
+            QAToolTelemetryClass.Entry parsedLine = ParseLine(firstLine);
+            entries.Add(parsedLine);
+        }
+        
+        return entries;
+    }
+    
     #endregion
 
     /// <summary>
