@@ -59,10 +59,43 @@ public class QAToolWindow : EditorWindow
         QAToolGlobals.showFeedbackNotes = EditorGUILayout.Toggle("Show Feedback Notes", QAToolGlobals.showFeedbackNotes);
 
         QAToolGlobals.feedbackKeyCode = EditorGUILayout.TextArea(QAToolGlobals.feedbackKeyCode);
+        
+        //---------------Enable/Disable-----------------------------
+        //---------------Float field Øverst-------------------------
+        //---------------Slider Nederst-----------------------------
+        QAToolGlobals.dataPointsPerSecond = EditorGUILayout.FloatField("Data Points Per Second", QAToolGlobals.dataPointsPerSecond);
+        //QAToolGlobals.dataPointsPerSecond = EditorGUILayout.Slider("Data Points logged Per Second", QAToolGlobals.dataPointsPerSecond, 0.1f, 20f);
 
+        QAToolGlobals.heatmapCellSize = EditorGUILayout.Slider("Cell Size", QAToolGlobals.heatmapCellSize, 0.2f, 5f);
+        
+        QAToolGlobals.heatmapOpacity = EditorGUILayout.Slider("Opacity", QAToolGlobals.heatmapOpacity, 0f, 1f);
+        
+        QAToolGlobals.heatmapContrast = EditorGUILayout.Slider("Contrast", QAToolGlobals.heatmapContrast, 0f, 3f);
+        
+        EditorGUILayout.LabelField("Percentile Range");
 
+        float min = QAToolGlobals.heatmapMinPercentile;
+        float max = QAToolGlobals.heatmapMaxPercentile;
+
+        EditorGUILayout.MinMaxSlider(
+            ref min,
+            ref max,
+            0f,
+            1f
+        );
+        
+        EditorGUILayout.BeginHorizontal();
+        min = EditorGUILayout.FloatField(min, GUILayout.MaxWidth(50));
+        max = EditorGUILayout.FloatField(max, GUILayout.MaxWidth(50));
+        EditorGUILayout.EndHorizontal();
+
+        QAToolGlobals.heatmapMinPercentile = Mathf.Clamp01(min);
+        QAToolGlobals.heatmapMaxPercentile = Mathf.Clamp01(max);
+        
+        
         if (EditorGUI.EndChangeCheck())
         {
+            QAToolSceneValidator.ForceValidate();
             DrawPlayerTrails();
             SceneView.RepaintAll();
         }
