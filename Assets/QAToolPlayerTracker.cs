@@ -17,7 +17,6 @@ using static System.Runtime.CompilerServices.RuntimeHelpers;
 
 public class QAToolPlayerTracker : MonoBehaviour
 {
-    [SerializeField]
     private float dataPointsPerSecond;
     
     
@@ -33,6 +32,7 @@ public class QAToolPlayerTracker : MonoBehaviour
 
     void Awake()
     {
+
         dataPointsPerSecond = QAToolGlobals.dataPointsPerSecond;
         if (!Directory.Exists(QAToolGlobals.folderPath))
         {
@@ -67,7 +67,8 @@ public class QAToolPlayerTracker : MonoBehaviour
         if (timer >= timerFrequency)
         {
             timer -= timerFrequency;
-            PrintJSON(QAToolJSONTypes.Movement,QAToolGlobals.flagValues);
+            
+            PrintJSON(QAToolJSONTypes.Movement, QAToolGlobals.flagValues);
         }
         if (Input.GetKeyDown(keyCode))
         {
@@ -86,8 +87,10 @@ public class QAToolPlayerTracker : MonoBehaviour
                 { "playerID", 1 }
             };
 
-        if (args != null)
+        if (args != null && args.Count > 0)
+        {
             entry["args"] = args;
+        }
 
         string jsonLine = JsonConvert.SerializeObject(entry);
         File.AppendAllText(filePath, jsonLine + Environment.NewLine);

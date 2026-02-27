@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
@@ -175,6 +176,9 @@ public static class QAToolGlobals
         get
         {
             Dictionary<string, Type> dict = new Dictionary<string, Type>();
+
+
+
             string raw = EditorPrefs.GetString("QAToolFlags", null); //input or null
             if (string.IsNullOrEmpty(raw)) return null;
             foreach (string section in raw.Split("|"))
@@ -196,11 +200,15 @@ public static class QAToolGlobals
     }
 
     private static Dictionary<string, object> _flagValues = new Dictionary<string, object>();
-    public static Dictionary<string,object> flagValues{
+    public static Dictionary<string, object> flagValues {
         get
         {
             Dictionary<string, object> dict = new Dictionary<string, object>();
-            foreach (KeyValuePair<string,Type> keyValuePair in flagTypes)
+            if (flagTypes == null || flagTypes.Keys.Count == 0)
+            {
+                return null;
+            }
+            foreach (KeyValuePair<string, Type> keyValuePair in flagTypes)
             {
                 if (_flagValues.ContainsKey(keyValuePair.Key))
                 {
@@ -214,15 +222,15 @@ public static class QAToolGlobals
             return dict;
         }
     }
-    public static object getValue(string key)
+    public static object GetFlagValue(string key)
     {
         return _flagValues[key];
     }
-    public static void setValue(string key, object value)
+    public static void SetFlagValue(string key, object value)
     {
-        _flagValues[key]=value;
+        _flagValues[key] = value;
     }
-        
+
 
     public static readonly Dictionary<string, string> typeNameToString = new()
     {
@@ -230,6 +238,96 @@ public static class QAToolGlobals
         {"Single","float"},
         {"Boolean","bool"},
         {"String","string"},
-       };
+    };
 
+    public enum FilterOperator
+    {
+        Ignore,
+        Equal,
+        NotEqual,
+        GreaterThan,
+        GreaterThanOrEqual,
+        LessThan,
+        LessThanOrEqual
+    }
+
+    public static Dictionary<FilterOperator, string> FilterOperatorToString = new()
+    {
+        { FilterOperator.Ignore,             "Ignore" },
+        { FilterOperator.Equal,              "="       },
+        { FilterOperator.NotEqual,           "!="      },
+        { FilterOperator.GreaterThan,        ">"       },
+        { FilterOperator.GreaterThanOrEqual, ">="      },
+        { FilterOperator.LessThan,           "<"       },
+        { FilterOperator.LessThanOrEqual,    "<="      }
+    };
+
+    public class FlagFilter
+    {
+        public bool enabled;
+        public FilterOperator op;
+        public object value;
+    }
+
+    public static Dictionary<string, FlagFilter> FlagFilters
+    {
+        get
+        {
+            Dictionary<string, FlagFilter> dict = new Dictionary<string, FlagFilter>();
+            string raw = EditorPrefs.GetString("QAToolFlagFilters", null);
+
+            if (string.IsNullOrEmpty(raw)) return dict;
+
+            foreach (string section in raw.Split("|"))
+            {
+                string[] parts = section.Split(":");
+
+                if (parts.Length != 4) continue;
+
+                string key = parts[0];
+                bool enabled = bool.Parse(parts[1]);
+                FilterOperator op = (FilterOperator)Enum.Parse(typeof(FilterOperator), parts[2]);
+                string rawValue = parts[3];
+
+                // Resolve the value type from flagTypes, then parse accordingly
+                object value = null;
+                if (flagTypes != null && flagTypes.TryGetValue(key, out Type flagType) && rawValue != "null")
+                {
+                    value = Convert.ChangeType(rawValue, flagType);
+                }
+
+                dict[key] = new FlagFilter
+                {
+                    enabled = enabled,
+                    op = op,
+                    value = value
+                };
+            }
+
+            return dict;
+        }
+        set
+        {
+            if (value == null)
+            {
+                EditorPrefs.DeleteKey("QAToolFlagFilters");
+                return;
+            }
+
+            List<string> parts = new List<string>();
+
+            foreach (KeyValuePair<string, FlagFilter> kvp in value)
+            {
+                string key = kvp.Key;
+                FlagFilter filter = kvp.Value;
+
+                // Serialize the value as a string, or "null" if not set
+                string serializedValue = filter.value?.ToString() ?? "null";
+
+                parts.Add($"{key}:{filter.enabled}:{filter.op}:{serializedValue}");
+            }
+
+            EditorPrefs.SetString("QAToolFlagFilters", string.Join("|", parts));
+        }
+    }
 }

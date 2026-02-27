@@ -52,13 +52,81 @@ public static class QAToolTelemetryLoader
 
         try
         {
-            return JsonConvert.DeserializeObject<QAToolTelemetryClass.Entry>(line);
+            QAToolTelemetryClass.Entry entry = JsonConvert.DeserializeObject<QAToolTelemetryClass.Entry>(line);
+            return FilterEntry(entry);
         }
         catch (Exception e)
         {
             Debug.LogWarning($"Failed to parse line: {line}\nError: {e.Message}");
             return null;
         }
+    }
+
+    private static QAToolTelemetryClass.Entry FilterEntry(QAToolTelemetryClass.Entry entry)
+    {
+        if (entry.args == null)
+            return entry;
+
+
+        foreach (string argName in entry.args.Keys)
+        {
+            if (QAToolGlobals.FlagFilters.ContainsKey(argName))
+            {
+                QAToolGlobals.FlagFilter filter = QAToolGlobals.FlagFilters[argName];
+                if (filter.enabled)
+                {
+                    object argValue = entry.args[argName];
+
+                    switch (filter.op)
+                    {
+                        case QAToolGlobals.FilterOperator.Ignore:
+                            return entry;
+
+                        case QAToolGlobals.FilterOperator.Equal:
+                            return Equals(argValue, filter.value) ? entry : null;
+
+                        case QAToolGlobals.FilterOperator.NotEqual:
+                            return !Equals(argValue, filter.value) ? entry : null;
+
+                        case QAToolGlobals.FilterOperator.GreaterThan:
+                            return Compare(argValue, filter.value) > 0 ? entry : null;
+
+                        case QAToolGlobals.FilterOperator.GreaterThanOrEqual:
+                            return Compare(argValue, filter.value) >= 0 ? entry : null;
+
+                        case QAToolGlobals.FilterOperator.LessThan:
+                            return Compare(argValue, filter.value) < 0 ? entry : null;
+
+                        case QAToolGlobals.FilterOperator.LessThanOrEqual:
+                            return Compare(argValue, filter.value) <= 0 ? entry : null;
+
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+
+        return entry;
+    }
+
+    private static int Compare(object a, object b)
+    {
+        if (a == null || b == null)
+            throw new InvalidOperationException("Cannot compare null values.");
+
+        // Normalize both to the same type (use the filter value's type as target)
+        try
+        {
+            Type targetType = b.GetType();
+            object normalizedA = Convert.ChangeType(a, targetType);
+
+            if (normalizedA is IComparable comparable)
+                return comparable.CompareTo(b);
+        }
+        catch { /* fall through */ }
+
+        throw new InvalidOperationException($"Cannot compare types {a?.GetType().Name} and {b?.GetType().Name}.");
     }
     #endregion
 
