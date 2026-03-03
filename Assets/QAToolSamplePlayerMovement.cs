@@ -5,7 +5,7 @@ public class QAToolSamplePlayerMovement : MonoBehaviour
 
     private void Start()
     {
-        QAToolGlobals.FlagFilters.Add("jumpCount", new QAToolGlobals.FlagFilter() { enabled = true, op = QAToolGlobals.FilterOperator.GreaterThan, value = 10 });
+        
     }
     [SerializeField] float moveSpeed = 10f;
     [SerializeField] float turnSpeed = 120f;
@@ -25,7 +25,7 @@ public class QAToolSamplePlayerMovement : MonoBehaviour
         if (Input.GetKey(KeyCode.A)) turnInput = -1f;
         if (Input.GetKey(KeyCode.D)) turnInput = 1f;
 
-        if (Input.GetKeyDown(KeyCode.Space)) { QAToolGlobals.SetFlagValue("jumps", jumpCount++); QAToolGlobals.SetFlagValue("jumpyjumps", jumpyjumps--); }
+        if (Input.GetKeyDown(KeyCode.Space)) { QAToolGlobals.SetFlagValue("jumps", jumpCount++); }
 
 
         // Move forward/backward

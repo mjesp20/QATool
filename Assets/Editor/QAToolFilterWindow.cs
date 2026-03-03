@@ -1,151 +1,311 @@
 using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEditor.IMGUI.Controls;
+using System;
+
+// ─────────────────────────────────────────────
+// Editor Window
+// ─────────────────────────────────────────────
 
 public class QAToolFilterWindow : EditorWindow
 {
     private TreeViewState treeViewState;
     private PlayerTreeView treeView;
+    private List<string> argKeys;
 
+    // Local UI state — operator selection and raw string input per arg
+    private Dictionary<string, QAToolGlobals.FilterOperator> filterOps = new();
+    private Dictionary<string, string> filterValueStrings = new();
 
-    public static void ShowWindow()
-    {
-        GetWindow<QAToolFilterWindow>("QA Tool Filters").Show();
-    }
+    public static void ShowWindow() => GetWindow<QAToolFilterWindow>("QA Tool Filters").Show();
 
     private void OnEnable()
     {
         if (treeViewState == null)
             treeViewState = new TreeViewState();
-        
-        List<List<QAToolTelemetryClass.Entry>> loadedData = QAToolTelemetryLoader.LoadFromFolder();
-        List<string> argKeys = CollectArgKeys(loadedData);
 
-        var headerState = PlayerTreeView.CreateDefaultMultiColumnHeaderState(position.width);
-        var multiColumnHeader = new TriStateMultiColumnHeader(headerState, argKeys.Count);
+        var loadedData = QAToolTelemetryLoader.LoadFromFolder();
+        argKeys = CollectUniqueArgKeys(loadedData);
 
-        treeView = new PlayerTreeView(treeViewState, multiColumnHeader, loadedData, argKeys);
+        InitFilterState();
+
+        var headerState = PlayerTreeView.CreateHeaderState(position.width, argKeys);
+        treeView = new PlayerTreeView(treeViewState, new MultiColumnHeader(headerState), loadedData, argKeys);
     }
-    
-    private List<string> CollectArgKeys(List<List<QAToolTelemetryClass.Entry>> loadedData)
+
+    // Seeds local UI state from whatever is already in QAToolGlobals, or defaults to Ignore
+    private void InitFilterState()
     {
-        var keys = new List<string>();
-        foreach (var entries in loadedData)
+        filterOps.Clear();
+        filterValueStrings.Clear();
+        foreach (var key in argKeys)
         {
-            if (entries == null) continue;
-            foreach (var entry in entries)
+            if (QAToolGlobals.FlagFilters != null &&
+                QAToolGlobals.FlagFilters.TryGetValue(key, out var existing) &&
+                existing.enabled)
             {
-                if (entry?.args == null) continue;
-                foreach (var key in entry.args.Keys)
-                {
-                    if (!keys.Contains(key))
-                        keys.Add(key);
-                }
+                filterOps[key] = existing.op;
+                filterValueStrings[key] = existing.value?.ToString() ?? "";
+            }
+            else
+            {
+                filterOps[key] = QAToolGlobals.FilterOperator.Ignore;
+                filterValueStrings[key] = "";
             }
         }
-        return keys;
     }
 
     private void OnGUI()
     {
-        treeView.OnGUI(new Rect(0, 0, position.width, position.height - 30));
+        const float filterStripHeight = 26f;
+        const float buttonHeight = 30f;
 
-        Rect buttonRect = new Rect(10, position.height - 28, 220, 24);
-        if (GUI.Button(buttonRect, "Print Table Values"))
-            treeView.PrintTableValues();
+        // Filter strip must be drawn before the tree view to stay outside its clip scope
+        DrawFilterStrip(new Rect(0, 0, position.width, filterStripHeight));
+        treeView.OnGUI(new Rect(0, filterStripHeight, position.width, position.height - buttonHeight - filterStripHeight));
+
+        if (GUI.Button(new Rect(10, position.height - 28, 140, 24), "Clear All Filters"))
+        {
+            foreach (var key in argKeys)
+            {
+                filterOps[key] = QAToolGlobals.FilterOperator.Ignore;
+                filterValueStrings[key] = "";
+            }
+            CommitFilters();
+        }
+    }
+
+    // Draws one filter control per arg column, horizontally aligned with tree view columns
+    private void DrawFilterStrip(Rect stripRect)
+    {
+        float scrollX = treeViewState.scrollPos.x;
+        var columns = treeView.multiColumnHeader.state.columns;
+        int[] visibleColumns = treeView.multiColumnHeader.state.visibleColumns;
+
+        float xPos = -scrollX;
+        foreach (int colIdx in visibleColumns)
+        {
+            float colWidth = columns[colIdx].width;
+
+            if (colIdx >= 1 && colIdx <= argKeys.Count)
+            {
+                string argName = argKeys[colIdx - 1];
+                DrawArgFilter(new Rect(xPos + 1, stripRect.y + 2, colWidth - 3, stripRect.height - 4), argName);
+            }
+
+            xPos += colWidth;
+        }
+    }
+
+    private void DrawArgFilter(Rect rect, string argName)
+    {
+        Type argType = GetArgType(argName);
+
+        var currentOp = filterOps.TryGetValue(argName, out var op) ? op : QAToolGlobals.FilterOperator.Ignore;
+        var currentValStr = filterValueStrings.TryGetValue(argName, out var vs) ? vs : "";
+
+        // Bool and string only support equality; numerics (and unknown) get the full set
+        bool isNumeric = argType == typeof(int) || argType == typeof(float) || argType == null;
+        bool isBool = argType == typeof(bool);
+
+        string[] opLabels;
+        QAToolGlobals.FilterOperator[] opValues;
+
+        if (isNumeric)
+        {
+            opLabels = new[] { "—", "=", "≠", ">", "≥", "<", "≤" };
+            opValues = new[]
+            {
+                QAToolGlobals.FilterOperator.Ignore,
+                QAToolGlobals.FilterOperator.Equal,
+                QAToolGlobals.FilterOperator.NotEqual,
+                QAToolGlobals.FilterOperator.GreaterThan,
+                QAToolGlobals.FilterOperator.GreaterThanOrEqual,
+                QAToolGlobals.FilterOperator.LessThan,
+                QAToolGlobals.FilterOperator.LessThanOrEqual
+            };
+        }
+        else
+        {
+            opLabels = new[] { "—", "=", "≠" };
+            opValues = new[]
+            {
+                QAToolGlobals.FilterOperator.Ignore,
+                QAToolGlobals.FilterOperator.Equal,
+                QAToolGlobals.FilterOperator.NotEqual
+            };
+        }
+
+        int opIdx = Mathf.Max(0, System.Array.IndexOf(opValues, currentOp));
+
+        const float opWidth = 28f;
+        Rect opRect = new Rect(rect.x, rect.y, opWidth, rect.height);
+        Rect valRect = new Rect(rect.x + opWidth + 2, rect.y, rect.width - opWidth - 2, rect.height);
+
+        EditorGUI.BeginChangeCheck();
+
+        int newOpIdx = EditorGUI.Popup(opRect, opIdx, opLabels);
+        var newOp = opValues[newOpIdx];
+
+        // Use currentOp (saved state) to decide visibility so the field persists across frames.
+        // If the dropdown was just changed to Ignore, the field disappears next frame.
+        string newValStr = currentValStr;
+        if (currentOp != QAToolGlobals.FilterOperator.Ignore || newOp != QAToolGlobals.FilterOperator.Ignore)
+        {
+            newValStr = isBool
+                ? (EditorGUI.Toggle(valRect, currentValStr == "true") ? "true" : "false")
+                : EditorGUI.TextField(valRect, currentValStr);
+        }
+
+        if (EditorGUI.EndChangeCheck())
+        {
+            filterOps[argName] = newOp;
+            filterValueStrings[argName] = newValStr;
+            CommitFilters();
+        }
+    }
+
+    // Writes current UI state to QAToolGlobals.FlagFilters and refreshes the tree view.
+    // A filter is only marked enabled when the value string successfully parses for its type —
+    // this prevents QAToolGlobals from receiving half-typed strings like "5." or "".
+    private void CommitFilters()
+    {
+        var filters = new Dictionary<string, QAToolGlobals.FlagFilter>();
+        foreach (var key in argKeys)
+        {
+            var op = filterOps.TryGetValue(key, out var o) ? o : QAToolGlobals.FilterOperator.Ignore;
+            var valStr = filterValueStrings.TryGetValue(key, out var v) ? v : "";
+
+            bool parsed = TryParseFilterValue(valStr, GetArgType(key), out object parsedValue);
+
+            filters[key] = new QAToolGlobals.FlagFilter
+            {
+                enabled = op != QAToolGlobals.FilterOperator.Ignore && parsed,
+                op = op,
+                value = parsedValue
+            };
+        }
+        QAToolGlobals.FlagFilters = filters;
+        treeView.Reload();
+    }
+
+    // ── Helpers ──────────────────────────────
+
+    private static Type GetArgType(string argName)
+    {
+        if (QAToolGlobals.flagTypes != null && QAToolGlobals.flagTypes.TryGetValue(argName, out var t))
+            return t;
+        return null;
+    }
+
+    // Returns true only when valStr is a complete, valid value for the given type.
+    // Strings always succeed. Numerics require a full successful parse (no partial input).
+    private static bool TryParseFilterValue(string valStr, Type type, out object result)
+    {
+        if (type == typeof(int))
+        {
+            if (int.TryParse(valStr, out int i)) { result = i; return true; }
+            result = null; return false;
+        }
+        if (type == typeof(float))
+        {
+            if (float.TryParse(valStr,
+                System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out float f))
+            { result = f; return true; }
+            result = null; return false;
+        }
+        if (type == typeof(bool))
+        {
+            result = valStr == "true";
+            return true;
+        }
+        // String or unknown type — always valid, even if empty
+        result = valStr;
+        return !string.IsNullOrEmpty(valStr);
+    }
+
+    private static List<string> CollectUniqueArgKeys(List<List<QAToolTelemetryClass.Entry>> loadedData)
+    {
+        var keys = new HashSet<string>();
+        foreach (var session in loadedData)
+        {
+            if (session == null) continue;
+            foreach (var entry in session)
+            {
+                if (entry?.args == null) continue;
+                foreach (var key in entry.args.Keys)
+                {
+                    if (key != "note")
+                        keys.Add(key);
+                }
+            }
+        }
+        var sorted = keys.ToList();
+        sorted.Sort();
+        return sorted;
     }
 }
 
+// ─────────────────────────────────────────────
+// Tree View
+// ─────────────────────────────────────────────
+
 public class PlayerTreeView : TreeView
 {
-    private List<string> argKeys;
-    private int triStateColumnCount => argKeys.Count;
-    private int[] headerTriStates;
-    public List<PlayerRowData> data = new List<PlayerRowData>();
+    private readonly List<string> argKeys;
+    private readonly int argColumnCount;
 
-    private string[] jsonColumns = new string[] { "Type", "TotalTime", "PositionsCount", "ArgsCount" };
+    public List<PlayerRowData> data = new List<PlayerRowData>();
 
     public PlayerTreeView(TreeViewState state, MultiColumnHeader header,
                           List<List<QAToolTelemetryClass.Entry>> loadedData,
                           List<string> argKeys) : base(state, header)
     {
         this.argKeys = argKeys;
+        this.argColumnCount = argKeys.Count;
+
         rowHeight = 20;
         showAlternatingRowBackgrounds = true;
-        headerTriStates = new int[triStateColumnCount];
 
-        foreach (List<QAToolTelemetryClass.Entry> entries in loadedData)
+        foreach (var session in loadedData)
         {
-            if (entries == null || entries.Count == 0) continue;
-
-            float totalTime = 0f;
-            List<string> types = new List<string>();
-            int positionsCount = 0;
-            int argsCount = 0;
-            
-            bool[] presentArgs = new bool[argKeys.Count];
-
-            foreach (QAToolTelemetryClass.Entry entry in entries)
-            {
-                if (entry == null) continue;
-
-                totalTime = Mathf.Max(totalTime, entry.time);
-
-                if (!string.IsNullOrEmpty(entry.type) &&
-                    !types.Contains(entry.type) &&
-                    types.Count < 5)
-                {
-                    types.Add(entry.type);
-                }
-
-                if (entry.PlayerPosition != null)
-                    positionsCount++;
-
-                argsCount += entry.args?.Count ?? 0;
-                
-                if (entry.args != null)
-                {
-                    for (int k = 0; k < argKeys.Count; k++)
-                    {
-                        if (entry.args.ContainsKey(argKeys[k]))
-                            presentArgs[k] = true;
-                    }
-                }
-            }
-
-            string playerName = entries[0]?.playerID.ToString() ?? "Unknown";
-
-            var row = new PlayerRowData(playerName, entries, triStateColumnCount)
-            {
-                presentArgs = presentArgs,
-                jsonValues = new object[]
-                {
-                    string.Join(", ", types),
-                    totalTime,
-                    positionsCount,
-                    argsCount
-                }
-            };
-
-            data.Add(row);
+            if (session == null || session.Count == 0) continue;
+            data.Add(BuildRowData(session));
         }
 
-        (header as TriStateMultiColumnHeader).onTriStateColumnClicked = OverrideAllRowsInColumn;
         Reload();
     }
+
+    // Collects the last recorded value of each arg across all entries in the session
+    private PlayerRowData BuildRowData(List<QAToolTelemetryClass.Entry> session)
+    {
+        var argValues = new Dictionary<string, object>();
+
+        foreach (var entry in session)
+        {
+            if (entry?.args == null) continue;
+            foreach (var kvp in entry.args)
+            {
+                if (argKeys.Contains(kvp.Key))
+                    argValues[kvp.Key] = kvp.Value; // last value wins
+            }
+        }
+
+        string playerName = session[0]?.playerID.ToString() ?? "Unknown";
+        return new PlayerRowData(playerName, session, argValues);
+    }
+
+    // ── TreeView overrides ────────────────────
 
     protected override TreeViewItem BuildRoot()
     {
         var root = new TreeViewItem { id = 0, depth = -1 };
         var items = new List<TreeViewItem>();
-
         for (int i = 0; i < data.Count; i++)
             items.Add(new TreeViewItem { id = i + 1, depth = 0 });
-
         SetupParentsAndChildrenFromDepths(root, items);
         return root;
     }
@@ -157,48 +317,85 @@ public class PlayerTreeView : TreeView
 
         var row = data[dataIndex];
 
-        for (int i = 0; i < args.GetNumVisibleColumns(); i++)
-        {
-            Rect cellRect = args.GetCellRect(i);
+        // Dim rows that don't satisfy the active filters
+        if (!PassesFilters(row))
+            EditorGUI.DrawRect(args.rowRect, new Color(0f, 0f, 0f, 0.3f));
 
-            if (i == 0)
+        for (int visibleCol = 0; visibleCol < args.GetNumVisibleColumns(); visibleCol++)
+        {
+            Rect cellRect = args.GetCellRect(visibleCol);
+            int colIndex = args.GetColumn(visibleCol);
+
+            if (colIndex == 0)
             {
                 EditorGUI.LabelField(cellRect, row.playerName);
             }
-            else if (i <= triStateColumnCount)
+            else if (colIndex <= argColumnCount)
             {
-                int triIndex = i - 1;
-                bool hasArg = row.presentArgs != null && row.presentArgs[triIndex];
-                
-                GUI.enabled = hasArg;
-                if (GUI.Button(cellRect, GetTriStateSymbol(hasArg ? row.triStates[triIndex] : 0)))
-                    row.triStates[triIndex] = (row.triStates[triIndex] + 1) % 3;
-                GUI.enabled = true;
-            }
-            else
-            {
-                int jsonIndex = i - 1 - triStateColumnCount;
-                if (row.jsonValues != null && jsonIndex >= 0 && jsonIndex < row.jsonValues.Length)
-                    EditorGUI.LabelField(cellRect, row.jsonValues[jsonIndex]?.ToString());
+                string argName = argKeys[colIndex - 1];
+                string display = row.argValues.TryGetValue(argName, out var val) ? val?.ToString() ?? "" : "—";
+                EditorGUI.LabelField(cellRect, display);
             }
         }
     }
 
-    private void OverrideAllRowsInColumn(int triIndex)
+    // ── Filter evaluation ─────────────────────
+
+    private static bool PassesFilters(PlayerRowData row)
     {
-        headerTriStates[triIndex] = (headerTriStates[triIndex] + 1) % 3;
-        foreach (var row in data)
+        if (QAToolGlobals.FlagFilters == null) return true;
+
+        foreach (var kvp in QAToolGlobals.FlagFilters)
         {
-            if (row.presentArgs != null && row.presentArgs[triIndex])
-                row.triStates[triIndex] = headerTriStates[triIndex];
+            var filter = kvp.Value;
+            if (!filter.enabled || filter.op == QAToolGlobals.FilterOperator.Ignore) continue;
+
+            row.argValues.TryGetValue(kvp.Key, out var rowValue);
+            if (!EvaluateFilter(rowValue, filter))
+                return false;
         }
-        Reload();
+        return true;
     }
 
-    private string GetTriStateSymbol(int state)
+    private static bool EvaluateFilter(object rowValue, QAToolGlobals.FlagFilter filter)
     {
-        return state == 0 ? "☐" : state == 1 ? "☒" : "☑";
+        if (filter.value == null) return true;
+
+        // Prefer numeric comparison when both sides are convertible
+        if (TryToDouble(rowValue, out double dRow) && TryToDouble(filter.value, out double dFilter))
+        {
+            return filter.op switch
+            {
+                QAToolGlobals.FilterOperator.Equal => dRow == dFilter,
+                QAToolGlobals.FilterOperator.NotEqual => dRow != dFilter,
+                QAToolGlobals.FilterOperator.GreaterThan => dRow > dFilter,
+                QAToolGlobals.FilterOperator.GreaterThanOrEqual => dRow >= dFilter,
+                QAToolGlobals.FilterOperator.LessThan => dRow < dFilter,
+                QAToolGlobals.FilterOperator.LessThanOrEqual => dRow <= dFilter,
+                _ => true
+            };
+        }
+
+        // Fall back to string comparison (only Equal / NotEqual are meaningful here)
+        string sRow = rowValue?.ToString() ?? "";
+        string sFilter = filter.value.ToString();
+        return filter.op switch
+        {
+            QAToolGlobals.FilterOperator.Equal => sRow == sFilter,
+            QAToolGlobals.FilterOperator.NotEqual => sRow != sFilter,
+            _ => true
+        };
     }
+
+    private static bool TryToDouble(object val, out double result)
+    {
+        result = 0;
+        if (val == null) return false;
+        try { result = System.Convert.ToDouble(val); return true; }
+        catch { return false; }
+    }
+
+    // ── Debug helper ─────────────────────────
 
     public void PrintTableValues()
     {
@@ -206,55 +403,18 @@ public class PlayerTreeView : TreeView
         foreach (var row in data)
         {
             string rowStr = row.playerName + ": ";
-            for (int i = 0; i < argKeys.Count; i++)
-                rowStr += $"{argKeys[i]}={GetTriStateSymbol(row.triStates[i])} ";
-            for (int i = 0; i < row.jsonValues.Length; i++)
-                rowStr += row.jsonValues[i] + " ";
+            foreach (var key in argKeys)
+                rowStr += $"{key}={(row.argValues.TryGetValue(key, out var v) ? v?.ToString() ?? "—" : "—")} ";
             Debug.Log(rowStr);
         }
         Debug.Log("===================");
     }
 
-    public void test()
+    // ── Static factory ───────────────────────
+
+    public static MultiColumnHeaderState CreateHeaderState(float width, List<string> argKeys)
     {
-        HashSet<string> seenArguments = new HashSet<string>();
-        
-        foreach (QAToolTelemetryClass.Entry entry in QAToolTelemetryLoader.GetFirstEntryFromAllFiles())
-        {
-            foreach (KeyValuePair<string, object> keyValuePair in entry.args)
-            {
-                seenArguments.Add(keyValuePair.Key);
-                
-            }
-        }
-    }
-    
-    private static List<string> GetAllUniqueArgKeys()
-    {
-        HashSet<string> seenArguments = new HashSet<string>();
-
-        foreach (QAToolTelemetryClass.Entry entry in QAToolTelemetryLoader.GetFirstEntryFromAllFiles())
-        {
-            foreach (KeyValuePair<string, object> keyValuePair in entry.args)
-            {
-                seenArguments.Add(keyValuePair.Key);
-            }
-        }
-        
-        List<string> argKeys = seenArguments.ToList();
-        argKeys.Sort();
-
-        return argKeys;
-    }
-    
-    
-
-    public static MultiColumnHeaderState CreateDefaultMultiColumnHeaderState(float width)
-    {
-        List<string> argKeys = GetAllUniqueArgKeys();
-
-        int totalColumns = 1 + argKeys.Count + 4;
-        var columns = new MultiColumnHeaderState.Column[totalColumns];
+        var columns = new MultiColumnHeaderState.Column[1 + argKeys.Count];
 
         columns[0] = new MultiColumnHeaderState.Column
         {
@@ -275,61 +435,25 @@ public class PlayerTreeView : TreeView
             };
         }
 
-        string[] jsonCols = { "Type", "TotalTime", "PositionsCount", "ArgsCount" };
-
-        for (int i = 0; i < jsonCols.Length; i++)
-        {
-            columns[i + 1 + argKeys.Count] = new MultiColumnHeaderState.Column
-            {
-                headerContent = new GUIContent(jsonCols[i]),
-                width = 150,
-                minWidth = 60,
-                autoResize = true
-            };
-        }
-
         return new MultiColumnHeaderState(columns);
     }
 }
 
-public class TriStateMultiColumnHeader : MultiColumnHeader
-{
-    public System.Action<int> onTriStateColumnClicked;
-    private int triStateColumnCount;
-
-    public TriStateMultiColumnHeader(MultiColumnHeaderState state, int triStateColumnCount) : base(state)
-    {
-        this.triStateColumnCount = triStateColumnCount;
-    }
-
-    protected override void ColumnHeaderClicked(MultiColumnHeaderState.Column column, int columnIndex)
-    {
-        if (columnIndex >= 1 && columnIndex <= triStateColumnCount)
-        {
-            onTriStateColumnClicked?.Invoke(columnIndex - 1);
-        }
-        else
-        {
-            base.ColumnHeaderClicked(column, columnIndex);
-        }
-    }
-}
+// ─────────────────────────────────────────────
+// Data Model
+// ─────────────────────────────────────────────
 
 [System.Serializable]
 public class PlayerRowData
 {
     public string playerName;
-    public int[] triStates;
-    public bool[] presentArgs;
     public List<QAToolTelemetryClass.Entry> entries;
-    public object[] jsonValues;
+    public Dictionary<string, object> argValues; // last recorded value per arg
 
-    public PlayerRowData(string name, List<QAToolTelemetryClass.Entry> parsedEntries, int triStateCount)
+    public PlayerRowData(string name, List<QAToolTelemetryClass.Entry> entries, Dictionary<string, object> argValues)
     {
         playerName = name;
-        entries = parsedEntries;
-        triStates = new int[triStateCount];
-        presentArgs = new bool[triStateCount];
-        jsonValues = new object[4];
+        this.entries = entries;
+        this.argValues = argValues ?? new Dictionary<string, object>();
     }
 }

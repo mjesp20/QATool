@@ -67,7 +67,7 @@ public class EditorHeatmap : MonoBehaviour
         List<Vector3> positions = QAToolTelemetryLoader.GetAllEntries().Select(entry => entry.PlayerPosition.ToVector3()).ToList();
 
 
-        Debug.Log($"{positions.Count} positions");
+        //Debug.Log($"{positions.Count} positions");
 
         foreach (var position in positions)
         {

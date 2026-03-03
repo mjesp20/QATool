@@ -1,10 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Newtonsoft.Json;
-using UnityEngine;
-using UnityEngine.UIElements;
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using Newtonsoft.Json;
+    using UnityEngine;
+    using UnityEngine.UIElements;
 
 public static class QAToolTelemetryLoader
 {
@@ -65,70 +65,90 @@ public static class QAToolTelemetryLoader
 
     private static QAToolTelemetryClass.Entry FilterEntry(QAToolTelemetryClass.Entry entry)
     {
-        if (entry.args == null)
-            return entry;
-
-
-        foreach (string argName in entry.args.Keys)
+        foreach (KeyValuePair<string, object> arg in entry.args)
         {
-            if (QAToolGlobals.FlagFilters.ContainsKey(argName))
+            if (arg.Key == "note")
             {
-                QAToolGlobals.FlagFilter filter = QAToolGlobals.FlagFilters[argName];
-                if (filter.enabled)
-                {
-                    object argValue = entry.args[argName];
-
-                    switch (filter.op)
-                    {
-                        case QAToolGlobals.FilterOperator.Ignore:
-                            return entry;
-
-                        case QAToolGlobals.FilterOperator.Equal:
-                            return Equals(argValue, filter.value) ? entry : null;
-
-                        case QAToolGlobals.FilterOperator.NotEqual:
-                            return !Equals(argValue, filter.value) ? entry : null;
-
-                        case QAToolGlobals.FilterOperator.GreaterThan:
-                            return Compare(argValue, filter.value) > 0 ? entry : null;
-
-                        case QAToolGlobals.FilterOperator.GreaterThanOrEqual:
-                            return Compare(argValue, filter.value) >= 0 ? entry : null;
-
-                        case QAToolGlobals.FilterOperator.LessThan:
-                            return Compare(argValue, filter.value) < 0 ? entry : null;
-
-                        case QAToolGlobals.FilterOperator.LessThanOrEqual:
-                            return Compare(argValue, filter.value) <= 0 ? entry : null;
-
-                        default:
-                            break;
-                    }
-                }
+                continue;
             }
+
+            var flags = QAToolGlobals.flagTypes ?? new Dictionary<string, Type>();
+
+
+            if (!flags.ContainsKey(arg.Key))
+            {
+                object normalized = QAToolGlobals.NormalizeType(arg.Value);
+                flags[arg.Key] = normalized != null ? normalized.GetType() : typeof(object);
+            }   
+
+
+            QAToolGlobals.flagTypes = flags;
+
+            if (!QAToolGlobals.FlagFilters.ContainsKey(arg.Key))
+                continue;
+
+            QAToolGlobals.FlagFilter filter = QAToolGlobals.FlagFilters[arg.Key];
+
+            if (!filter.enabled)
+                continue;
+
+            // If filter value is null, skip comparison
+            if (filter.value == null)
+                continue;
+
+            if (arg.Value == null)
+                continue;
+
+            object entryVal = QAToolGlobals.NormalizeType(arg.Value);
+            object filterVal = QAToolGlobals.NormalizeType(filter.value);
+
+            // Both must be IComparable for ordered comparisons
+            IComparable comparable = entryVal as IComparable;
+
+            bool pass = true;
+
+            switch (filter.op)
+            {
+                case QAToolGlobals.FilterOperator.Ignore:
+                    pass = true;
+                    break;
+
+                case QAToolGlobals.FilterOperator.Equal:
+                    pass = entryVal?.Equals(filterVal) ?? false;
+                    break;
+
+                case QAToolGlobals.FilterOperator.NotEqual:
+                    pass = !(entryVal?.Equals(filterVal) ?? false);
+                    break;
+
+                case QAToolGlobals.FilterOperator.GreaterThan:
+                    pass = comparable != null && comparable.CompareTo(filterVal) > 0;
+                    break;
+
+                case QAToolGlobals.FilterOperator.GreaterThanOrEqual:
+                    pass = comparable != null && comparable.CompareTo(filterVal) >= 0;
+                    break;
+
+                case QAToolGlobals.FilterOperator.LessThan:
+                    pass = comparable != null && comparable.CompareTo(filterVal) < 0;
+                    break;
+
+                case QAToolGlobals.FilterOperator.LessThanOrEqual:
+                    pass = comparable != null && comparable.CompareTo(filterVal) <= 0;
+                    break;
+
+                default:
+                    pass = true;
+                    break;
+            }
+
+            // If any active filter fails, discard the entry
+            if (!pass) return null;
         }
 
         return entry;
     }
 
-    private static int Compare(object a, object b)
-    {
-        if (a == null || b == null)
-            throw new InvalidOperationException("Cannot compare null values.");
-
-        // Normalize both to the same type (use the filter value's type as target)
-        try
-        {
-            Type targetType = b.GetType();
-            object normalizedA = Convert.ChangeType(a, targetType);
-
-            if (normalizedA is IComparable comparable)
-                return comparable.CompareTo(b);
-        }
-        catch { /* fall through */ }
-
-        throw new InvalidOperationException($"Cannot compare types {a?.GetType().Name} and {b?.GetType().Name}.");
-    }
     public static List<QAToolTelemetryClass.Entry> GetFirstEntryFromAllFiles()
     {
         List<QAToolTelemetryClass.Entry> entries = new List<QAToolTelemetryClass.Entry>();
@@ -140,10 +160,10 @@ public static class QAToolTelemetryLoader
             QAToolTelemetryClass.Entry parsedLine = ParseLine(firstLine);
             entries.Add(parsedLine);
         }
-        
+
         return entries;
     }
-    
+
     #endregion
 
     /// <summary>
@@ -151,7 +171,7 @@ public static class QAToolTelemetryLoader
     /// </summary>
     public static List<QAToolTelemetryClass.Entry> GetAllEntries(QAToolJSONTypes type = QAToolJSONTypes.None)
     {
-        List<QAToolTelemetryClass.Entry> entries  = new List<QAToolTelemetryClass.Entry>();
+        List<QAToolTelemetryClass.Entry> entries = new List<QAToolTelemetryClass.Entry>();
         foreach (List<QAToolTelemetryClass.Entry> entryList in LoadFromFolder())
         {
             foreach (QAToolTelemetryClass.Entry entry in entryList)

@@ -45,6 +45,7 @@ public class QAToolWindow : EditorWindow
         {
             QAToolFlagWindow.ShowWindow();
         }
+        
         if (GUILayout.Button("addFilter"))
         {
             var filters = new Dictionary<string, QAToolGlobals.FlagFilter>();   // get (deserialize)
@@ -56,8 +57,15 @@ public class QAToolWindow : EditorWindow
 
             };
             QAToolGlobals.FlagFilters = filters;
-            QAToolSceneValidator.ForceValidate();
+            UpdateScene();
         }
+        if (GUILayout.Button("removeFilter"))
+        {
+            
+            QAToolGlobals.FlagFilters = null;
+            UpdateScene();
+        }
+        
         if (Event.current.type == EventType.Repaint)
             popupButtonRect = GUILayoutUtility.GetLastRect();
 
@@ -108,12 +116,16 @@ public class QAToolWindow : EditorWindow
         
         if (EditorGUI.EndChangeCheck())
         {
-            QAToolSceneValidator.ForceValidate();
-            DrawPlayerTrails();
-            SceneView.RepaintAll();
+            UpdateScene();
         }
     }
+    public void UpdateScene()
+    {
+        QAToolSceneValidator.ForceValidate();
+        DrawPlayerTrails();
+        SceneView.RepaintAll();
 
+    }
 
     public static void DrawFeedbackNotes()
     {

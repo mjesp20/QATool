@@ -240,6 +240,19 @@ public static class QAToolGlobals
         {"String","string"},
     };
 
+    public static object NormalizeType(object input)
+    {
+        switch (input)
+        {
+            case long l:
+                return (int)l;
+            case double d:
+                return (float)d;
+            default:
+                return input;
+        }
+    }
+
     public enum FilterOperator
     {
         Ignore,
