@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using Unity.VisualScripting;
@@ -266,13 +266,13 @@ public static class QAToolGlobals
 
     public static Dictionary<FilterOperator, string> FilterOperatorToString = new()
     {
-        { FilterOperator.Ignore,             "Ignore" },
+        { FilterOperator.Ignore,             "—" },
         { FilterOperator.Equal,              "="       },
-        { FilterOperator.NotEqual,           "!="      },
+        { FilterOperator.NotEqual,           "≠"      },
         { FilterOperator.GreaterThan,        ">"       },
-        { FilterOperator.GreaterThanOrEqual, ">="      },
+        { FilterOperator.GreaterThanOrEqual, "≥"      },
         { FilterOperator.LessThan,           "<"       },
-        { FilterOperator.LessThanOrEqual,    "<="      }
+        { FilterOperator.LessThanOrEqual,    "≤"      }
     };
 
     public class FlagFilter
