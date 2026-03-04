@@ -1,9 +1,10 @@
-using UnityEditor;
-using UnityEngine;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEditor.IMGUI.Controls;
-using System;
+using UnityEngine;
+using static QAToolGlobals;
 
 // ─────────────────────────────────────────────
 // Editor Window
@@ -110,33 +111,28 @@ public class QAToolFilterWindow : EditorWindow
         bool isNumeric = argType == typeof(int) || argType == typeof(float) || argType == null;
         bool isBool = argType == typeof(bool);
 
-        string[] opLabels;
-        QAToolGlobals.FilterOperator[] opValues;
+        FilterOperator[] allowedOperators = isNumeric
+            ? new[]
+            {
+                FilterOperator.Ignore,
+                FilterOperator.Equal,
+                FilterOperator.NotEqual,
+                FilterOperator.GreaterThan,
+                FilterOperator.GreaterThanOrEqual,
+                FilterOperator.LessThan,
+                FilterOperator.LessThanOrEqual
+            }
+            : new[]
+            {
+                FilterOperator.Ignore,
+                FilterOperator.Equal,
+                FilterOperator.NotEqual
+            };
 
-        if (isNumeric)
-        {
-            opLabels = new[] { "—", "=", "≠", ">", "≥", "<", "≤" };
-            opValues = new[]
-            {
-                QAToolGlobals.FilterOperator.Ignore,
-                QAToolGlobals.FilterOperator.Equal,
-                QAToolGlobals.FilterOperator.NotEqual,
-                QAToolGlobals.FilterOperator.GreaterThan,
-                QAToolGlobals.FilterOperator.GreaterThanOrEqual,
-                QAToolGlobals.FilterOperator.LessThan,
-                QAToolGlobals.FilterOperator.LessThanOrEqual
-            };
-        }
-        else
-        {
-            opLabels = new[] { "—", "=", "≠" };
-            opValues = new[]
-            {
-                QAToolGlobals.FilterOperator.Ignore,
-                QAToolGlobals.FilterOperator.Equal,
-                QAToolGlobals.FilterOperator.NotEqual
-            };
-        }
+        var opValues = allowedOperators;
+        var opLabels = allowedOperators
+            .Select(op => QAToolGlobals.FilterOperatorToString[op])
+            .ToArray();
 
         int opIdx = Mathf.Max(0, System.Array.IndexOf(opValues, currentOp));
 

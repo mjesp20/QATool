@@ -46,26 +46,6 @@ public class QAToolWindow : EditorWindow
         if (GUILayout.Button("Flags"))
             QAToolFlagWindow.ShowWindow();
         
-
-        if (GUILayout.Button("addFilter"))
-        {
-            var filters = new Dictionary<string, QAToolGlobals.FlagFilter>();
-            filters["jumps"] = new QAToolGlobals.FlagFilter()
-            {
-                enabled = true,
-                op = QAToolGlobals.FilterOperator.GreaterThanOrEqual,
-                value = 2
-            };
-            QAToolGlobals.FlagFilters = filters;
-            UpdateScene();
-        }
-
-        if (GUILayout.Button("removeFilter"))
-        {
-            
-            QAToolGlobals.FlagFilters = null;
-            UpdateScene();
-        }
         
         if (Event.current.type == EventType.Repaint)
             popupButtonRect = GUILayoutUtility.GetLastRect();
