@@ -58,6 +58,7 @@ public class QAToolWindow : EditorWindow
         QAToolGlobals.showFeedbackNotes  = EditorGUILayout.Toggle("Show Feedback Notes",  QAToolGlobals.showFeedbackNotes);
 
         QAToolGlobals.feedbackKeyCode    = EditorGUILayout.TextArea(QAToolGlobals.feedbackKeyCode);
+
         
         //---------------Enable/Disable-----------------------------
         //---------------Float field Øverst-------------------------
