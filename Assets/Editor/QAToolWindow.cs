@@ -15,7 +15,8 @@ public class QAToolWindow : EditorWindow
     private static int currentPointIndex = 0;
 
     private static List<List<QAToolTelemetryClass.Entry>> allFiles = new List<List<QAToolTelemetryClass.Entry>>();
-    private static int currentFileIndex = 0;
+    public static int currentFileIndex = 0;
+    private static bool isPreview = true;
 
     void OnEnable()
     {
@@ -143,8 +144,11 @@ public class QAToolWindow : EditorWindow
         if (temporalTrail.Count > 0)
         {
             Handles.color = Color.white;
-            for (int i = 0; i < currentPointIndex; i++)
-                Handles.DrawLine(temporalTrail[i], temporalTrail[i + 1]);
+            
+            int drawUpTo = isPreview ? temporalTrail.Count - 1 : currentPointIndex;
+
+            float thickness = isPreview ? 6f : 4f; //Hurtig Hardcode
+            Handles.DrawAAPolyLine(thickness, temporalTrail.Take(drawUpTo + 1).ToArray());
 
             Handles.DrawSolidDisc(temporalTrail[currentPointIndex], Vector3.up, 0.2f);
         }
@@ -176,6 +180,8 @@ public class QAToolWindow : EditorWindow
     
     private void DrawTemporalTrail()
     {
+        
+        
         GUILayout.Space(10);
         GUILayout.Label("Temporal Trail", EditorStyles.boldLabel);
 
@@ -184,8 +190,12 @@ public class QAToolWindow : EditorWindow
             LoadAllFiles();
             LoadFileAtIndex(0);
         }
-
-        if (allFiles.Count == 0) return;  // early return keeps nesting flat
+        
+        
+        if (allFiles.Count == 0) return;
+        
+        if (GUILayout.Button("Browse Files"))
+            QAToolTemporalFileWindow.ShowWindow();
 
         GUILayout.Space(4);
         GUILayout.Label($"Player File: {currentFileIndex + 1} / {allFiles.Count}");
@@ -208,7 +218,7 @@ public class QAToolWindow : EditorWindow
         EditorGUI.EndDisabledGroup();
         EditorGUILayout.EndHorizontal();
 
-        if (temporalTrail.Count == 0) return;  // early return again
+        if (temporalTrail.Count == 0) return;
 
         GUILayout.Space(4);
         GUILayout.Label($"Point: {currentPointIndex} / {temporalTrail.Count - 1}");
@@ -218,6 +228,7 @@ public class QAToolWindow : EditorWindow
         if (GUILayout.Button("◀ Prev"))
         {
             currentPointIndex--;
+            isPreview = false;
             SceneView.RepaintAll();
         }
         EditorGUI.EndDisabledGroup();
@@ -226,6 +237,7 @@ public class QAToolWindow : EditorWindow
         if (GUILayout.Button("Next ▶"))
         {
             currentPointIndex++;
+            isPreview = false;
             SceneView.RepaintAll();
         }
         EditorGUI.EndDisabledGroup();
@@ -235,6 +247,7 @@ public class QAToolWindow : EditorWindow
         if (newIndex != currentPointIndex)
         {
             currentPointIndex = newIndex;
+            isPreview = false;
             SceneView.RepaintAll();
         }
     }
@@ -251,6 +264,14 @@ public class QAToolWindow : EditorWindow
 
         temporalTrail = allFiles[index].Select(e => e.PlayerPosition.ToVector3()).ToList();
         currentPointIndex = 0;
+        isPreview = true;
         SceneView.RepaintAll();
     }
+    
+    public static void SelectFile(int index)
+    {
+        currentFileIndex = index;
+        LoadFileAtIndex(index);
+    }
+    
 }
