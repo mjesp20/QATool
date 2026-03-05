@@ -13,15 +13,5 @@ MonoBehaviour:
   m_Name: QAToolConfig
   m_EditorClassIdentifier: 
   dataPointsPerSecond: 10
-  feedbackKeyCode: B
-  flagDefinitions:
-  - key: hasPistol
-    typeName: bool
-  - key: hasKey
-    typeName: bool
-  - key: triggeredAlarm
-    typeName: bool
-  - key: test
-    typeName: string
-  - key: tests
-    typeName: float
+  feedbackKeyCode: F1
+  flagDefinitions: []
