@@ -27,6 +27,7 @@ public class QAToolWindow : EditorWindow
     void OnDisable()
     {
         SceneView.duringSceneGui -= OnSceneGUI;
+        AssetDatabase.SaveAssets();
     }
 
     [MenuItem("Window/QA Tool")]
