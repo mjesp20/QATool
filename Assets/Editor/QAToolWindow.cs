@@ -223,7 +223,9 @@ public class QAToolWindow : EditorWindow
         GUILayout.Space(4);
         GUILayout.Label($"Point: {currentPointIndex} / {temporalTrail.Count - 1}");
 
+        
         EditorGUILayout.BeginHorizontal();
+        /*
         EditorGUI.BeginDisabledGroup(currentPointIndex <= 0);
         if (GUILayout.Button("◀ Prev"))
         {
@@ -240,7 +242,9 @@ public class QAToolWindow : EditorWindow
             isPreview = false;
             SceneView.RepaintAll();
         }
+        
         EditorGUI.EndDisabledGroup();
+        */
         EditorGUILayout.EndHorizontal();
 
         int newIndex = (int)EditorGUILayout.Slider("Scrub", currentPointIndex, 0, temporalTrail.Count - 1);
@@ -273,5 +277,8 @@ public class QAToolWindow : EditorWindow
         currentFileIndex = index;
         LoadFileAtIndex(index);
     }
+    
+    
+    
     
 }
