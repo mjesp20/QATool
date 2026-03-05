@@ -190,11 +190,18 @@ public static class QAToolGlobals
             return dict;
         }
         set {
+            if (value == null)
+            {
+                EditorPrefs.SetString("QAToolFlags", "");
+                return;
+            }
+
             List<string> parts = new List<string>();
             foreach (KeyValuePair<string, Type> keyValuePair in value)
             {
                 parts.Add($"{keyValuePair.Key}:{keyValuePair.Value}");
             }
+
             EditorPrefs.SetString("QAToolFlags", string.Join("|", parts));
         }
     }
