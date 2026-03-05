@@ -26,6 +26,22 @@ public class QAToolTemporalFileWindow : EditorWindow
 
     void OnGUI()
     {
+        if (Event.current.type == EventType.KeyDown)
+        {
+            if (Event.current.keyCode == KeyCode.DownArrow)
+            {
+                QAToolWindow.SelectFile(Mathf.Min(QAToolWindow.currentFileIndex + 1, fileNames.Count - 1));
+                ScrollToSelected();
+                Event.current.Use();
+            }
+            else if (Event.current.keyCode == KeyCode.UpArrow)
+            {
+                QAToolWindow.SelectFile(Mathf.Max(QAToolWindow.currentFileIndex - 1, 0));
+                ScrollToSelected();
+                Event.current.Use();
+            }
+        }
+
         EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
         GUILayout.Label($"{fileNames.Count} files", EditorStyles.miniLabel);
         GUILayout.FlexibleSpace();
@@ -70,7 +86,7 @@ public class QAToolTemporalFileWindow : EditorWindow
             {
                 QAToolWindow.SelectFile(i);
 
-                if (Event.current.clickCount == 2)  // <-- close on double click
+                if (Event.current.clickCount == 2)
                     Close();
 
                 Repaint();
@@ -78,6 +94,21 @@ public class QAToolTemporalFileWindow : EditorWindow
         }
 
         EditorGUILayout.EndScrollView();
+    }
+
+    private void ScrollToSelected()
+    {
+        float rowHeight = EditorGUIUtility.singleLineHeight + 8;
+        float selectedY = QAToolWindow.currentFileIndex * rowHeight;
+        float windowHeight = position.height - EditorGUIUtility.singleLineHeight;
+
+        if (selectedY < scrollPosition.y)
+            scrollPosition.y = selectedY;
+
+        if (selectedY + rowHeight > scrollPosition.y + windowHeight)
+            scrollPosition.y = selectedY + rowHeight - windowHeight;
+
+        Repaint();
     }
 
     private static Texture2D MakeTex(Color color)
