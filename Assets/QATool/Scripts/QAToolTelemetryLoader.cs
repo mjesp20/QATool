@@ -21,6 +21,7 @@ public static class QAToolTelemetryLoader
         string[] filePaths = Directory.GetFiles(folderPath);
         if (filePaths.Length == 0)
         {
+            return new List<List<QAToolTelemetryClass.Entry>>();
             throw new Exception("No files in folder");
         }
 
@@ -172,6 +173,7 @@ public static class QAToolTelemetryLoader
     public static List<QAToolTelemetryClass.Entry> GetAllEntries(QAToolJSONTypes type = QAToolJSONTypes.None)
     {
         List<QAToolTelemetryClass.Entry> entries = new List<QAToolTelemetryClass.Entry>();
+
         foreach (List<QAToolTelemetryClass.Entry> entryList in LoadFromFolder())
         {
             foreach (QAToolTelemetryClass.Entry entry in entryList)

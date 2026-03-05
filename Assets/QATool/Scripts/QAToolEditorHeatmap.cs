@@ -6,7 +6,7 @@ using System.Linq;
 using UnityEngine;
 
 [ExecuteAlways]
-public class EditorHeatmap : MonoBehaviour
+public class QAToolEditorHeatmap : MonoBehaviour
 {
     [System.NonSerialized]
     Dictionary<Vector3Int, int> heatmap = new Dictionary<Vector3Int, int>();

@@ -14,4 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dataPointsPerSecond: 10
   feedbackKeyCode: F1
-  flagDefinitions: []
+  flagDefinitions:
+  - key: CollectedBlobs
+    typeName: int

@@ -1,8 +1,9 @@
 using System.Collections;
 using UnityEngine;
 
-public class Pickup : MonoBehaviour
+public class QAToolPickup : MonoBehaviour
 {
+    public static int collected = 1;
     public float cooldownDuration = 3f;
 
     public Material readyMaterial;
@@ -23,6 +24,7 @@ public class Pickup : MonoBehaviour
 
     IEnumerator CooldownRoutine()
     {
+        QAToolGlobals.SetFlagValue("CollectedBlobs", collected++);
         _renderer.material = cooldownMaterial;
 
         yield return new WaitForSeconds(cooldownDuration);
