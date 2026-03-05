@@ -1,8 +1,8 @@
+    using Newtonsoft.Json;
     using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using Newtonsoft.Json;
     using UnityEngine;
     using UnityEngine.UIElements;
 
@@ -10,7 +10,7 @@ public static class QAToolTelemetryLoader
 {
     static string folderPath = QAToolGlobals.folderPath;
 
-
+#if UNITY_EDITOR
     #region Generic Functions
     public static List<List<QAToolTelemetryClass.Entry>> LoadFromFolder()
     {
@@ -79,7 +79,7 @@ public static class QAToolTelemetryLoader
             {
                 object normalized = QAToolGlobals.NormalizeType(arg.Value);
                 flags[arg.Key] = normalized != null ? normalized.GetType() : typeof(object);
-            }   
+            }
 
 
             QAToolGlobals.flagTypes = flags;
@@ -209,5 +209,5 @@ public static class QAToolTelemetryLoader
         }
         return entriesByFile;
     }
-
+#endif
 }
