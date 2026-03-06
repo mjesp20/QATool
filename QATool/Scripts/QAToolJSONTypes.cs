@@ -1,9 +1,10 @@
-namespace QATool {
-public enum QAToolJSONTypes 
+namespace QATool
 {
-    None,
-    Movement,
-    FeedbackNote,
-    Event
-}
+    public enum QAToolJSONTypes
+    {
+        None,
+        Movement,
+        FeedbackNote,
+        Event
+    }
 }

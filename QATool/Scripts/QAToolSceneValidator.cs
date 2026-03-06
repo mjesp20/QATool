@@ -1,15 +1,16 @@
 using UnityEngine;
-namespace QATool {
-public static class QAToolSceneValidator 
+namespace QATool
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    public static event System.Action forceValidate;
-
-    public static void ForceValidate()
+    public static class QAToolSceneValidator
     {
-        forceValidate?.Invoke();
+        // Start is called once before the first execution of Update after the MonoBehaviour is created
+        public static event System.Action forceValidate;
+
+        public static void ForceValidate()
+        {
+            forceValidate?.Invoke();
+        }
+
+
     }
-    
-    
-}
 }

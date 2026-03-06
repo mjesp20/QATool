@@ -1,34 +1,37 @@
 using System.Collections;
 using UnityEngine;
 
-public class QAToolPickup : MonoBehaviour
+namespace QATool
 {
-    public static int collected = 1;
-    public float cooldownDuration = 3f;
-
-    public Material readyMaterial;
-    public Material cooldownMaterial;
-
-    private Renderer _renderer;
-
-    void Awake()
+    public class QAToolPickup : MonoBehaviour
     {
-        _renderer = GetComponent<Renderer>();
-    }
+        public static int collected = 1;
+        public float cooldownDuration = 3f;
 
-    void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Player"))
-            StartCoroutine(CooldownRoutine());
-    }
+        public Material readyMaterial;
+        public Material cooldownMaterial;
 
-    IEnumerator CooldownRoutine()
-    {
-        QAToolGlobals.SetFlagValue("CollectedBlobs", collected++);
-        _renderer.material = cooldownMaterial;
+        private Renderer _renderer;
 
-        yield return new WaitForSeconds(cooldownDuration);
+        void Awake()
+        {
+            _renderer = GetComponent<Renderer>();
+        }
 
-        _renderer.material = readyMaterial;
+        void OnTriggerEnter(Collider other)
+        {
+            if (other.CompareTag("Player"))
+                StartCoroutine(CooldownRoutine());
+        }
+
+        IEnumerator CooldownRoutine()
+        {
+            QAToolGlobals.SetFlagValue("CollectedBlobs", collected++);
+            _renderer.material = cooldownMaterial;
+
+            yield return new WaitForSeconds(cooldownDuration);
+
+            _renderer.material = readyMaterial;
+        }
     }
 }
