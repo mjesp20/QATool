@@ -1,0 +1,10 @@
+{
+    "name": "QATool",
+    "version": "1.0.0",
+    "displayName": "QATool",
+    "description": "Quality Assurance Tool",
+    "unity": "6000.0.58f2",
+    "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.2.1"
+    }
+}

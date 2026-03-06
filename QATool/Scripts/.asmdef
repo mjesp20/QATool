@@ -1,0 +1,7 @@
+{
+  "name": "QATool.Runtime",
+  "references": [
+    "Newtonsoft.Json"
+  ],
+  "autoReferenced": true
+}
