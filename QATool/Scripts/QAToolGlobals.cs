@@ -7,7 +7,7 @@ using System.Linq;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-
+namespace QATool {
 public static class QAToolGlobals
 {
     public static string name = "QATool";
@@ -233,4 +233,5 @@ public static class QAToolGlobals
         public FilterOperator op;
         public object value;
     }
+}
 }

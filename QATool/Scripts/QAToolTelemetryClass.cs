@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace QATool {
 [Serializable]
 public class QAToolTelemetryClass
 {
@@ -27,4 +28,5 @@ public class QAToolTelemetryClass
         public int playerID;
         public Dictionary<string, object> args;
     }
+}
 }

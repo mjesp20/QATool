@@ -6,6 +6,8 @@ using System.Linq;
 using UnityEditor;
 #endif
 
+
+namespace QATool {
 [CreateAssetMenu(fileName = "QAToolConfig", menuName = "QATool/Config")]
 public class QAToolConfig : ScriptableObject
 {
@@ -96,4 +98,5 @@ public class QAToolConfig : ScriptableObject
         if (_instance == null)
             Debug.LogWarning("[QATool] QAToolConfig not found in Preloaded Assets. Run the QATool editor window to generate it.");
     }
+}
 }

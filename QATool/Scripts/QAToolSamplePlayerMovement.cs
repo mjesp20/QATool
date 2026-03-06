@@ -1,5 +1,5 @@
 using UnityEngine;
-
+namespace QATool {
 public class QAToolSamplePlayerMovement : MonoBehaviour
 {
     [SerializeField] float moveSpeed = 10f;
@@ -47,4 +47,5 @@ public class QAToolSamplePlayerMovement : MonoBehaviour
             _rb.MoveRotation(_rb.rotation * turnRotation);
         }
     }
+}
 }

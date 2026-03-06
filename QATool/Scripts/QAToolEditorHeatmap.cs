@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 
+namespace QATool {
 [ExecuteAlways]
 public class QAToolEditorHeatmap : MonoBehaviour
 {
@@ -176,6 +177,7 @@ public class QAToolEditorHeatmap : MonoBehaviour
         Gizmos.color = new Color(color.r, color.g, color.b, heatmapOpacity);
         Gizmos.DrawCube(center, Vector3.one * heatmapCellSize);
     }
+}
 }
 }
 #endif

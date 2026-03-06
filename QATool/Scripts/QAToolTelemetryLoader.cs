@@ -6,6 +6,7 @@
     using UnityEngine;
     using UnityEngine.UIElements;
 
+namespace QATool {
 public static class QAToolTelemetryLoader
 {
     static string folderPath = QAToolGlobals.folderPath;
@@ -212,4 +213,5 @@ public static class QAToolTelemetryLoader
         return entriesByFile;
     }
 #endif
+}
 }

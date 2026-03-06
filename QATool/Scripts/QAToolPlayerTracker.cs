@@ -1,38 +1,27 @@
 using Newtonsoft.Json;
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
-using static System.Runtime.CompilerServices.RuntimeHelpers;
+using QATool
 
 
 
 public class QAToolPlayerTracker : MonoBehaviour
 {
     private float dataPointsPerSecond;
-    
-    
     private float timerFrequency = 1f;
     private float timer;
     private float playSessionDuration;
     private string filePath;
-    private Vector3 pos;
     private KeyCode keyCode;
-    private Vector3 lookingDirection;
-    private float delta;
     Button submitButton;
 
     void Awake()
     {
-
         dataPointsPerSecond = QAToolGlobals.dataPointsPerSecond;
         if (!Directory.Exists(QAToolGlobals.folderPath))
         {
@@ -51,13 +40,13 @@ public class QAToolPlayerTracker : MonoBehaviour
         highest++;
         filePath = Path.Combine(QAToolGlobals.folderPath, $"{highest}.jsonl");
     }
+
     void Start()
     {
         keyCode = (KeyCode)Enum.Parse(typeof(KeyCode), QAToolGlobals.feedbackKeyCode, true);
         timerFrequency = 1f / dataPointsPerSecond;
     }
 
-    // Update is called once per frame
     void Update()
     {
         float delta = Time.deltaTime;
@@ -67,38 +56,29 @@ public class QAToolPlayerTracker : MonoBehaviour
         if (timer >= timerFrequency)
         {
             timer -= timerFrequency;
-            
             PrintJSON(QAToolJSONTypes.Movement, QAToolGlobals.flagValues);
         }
+
         if (Input.GetKeyDown(keyCode))
         {
             CreateFeedbackNotesWindow();
         }
     }
 
-
     public void PrintJSON(QAToolJSONTypes type, Dictionary<string, object> args = null)
     {
         var entry = new Dictionary<string, object>
-            {
-                { "PlayerPosition", new { transform.position.x, transform.position.y, transform.position.z } },
-                { "type", type.ToString() },
-                { "time", playSessionDuration },
-                { "playerID", 1 }
-            };
-
-        if (args != null && args.Count > 0)
         {
-            entry["args"] = args;
-        }
+            { "PlayerPosition", new { transform.position.x, transform.position.y, transform.position.z } },
+            { "type", type.ToString() },
+            { "time", playSessionDuration },
+            { "playerID", 1 },
+            { "args", args ?? new Dictionary<string, object>() }
+        };
 
         string jsonLine = JsonConvert.SerializeObject(entry);
         File.AppendAllText(filePath, jsonLine + Environment.NewLine);
     }
-
-
-
-
 
     void CreateFeedbackNotesWindow()
     {
@@ -150,6 +130,7 @@ public class QAToolPlayerTracker : MonoBehaviour
         submitButton.AddComponent<Image>();
         submitButton.transform.parent = canvas.gameObject.transform;
     }
+
     public void SubmitNote(TMP_InputField inputField)
     {
         PrintJSON(QAToolJSONTypes.FeedbackNote, new Dictionary<string, object> { { "note", inputField.text } });
