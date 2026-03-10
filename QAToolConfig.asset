@@ -15,5 +15,5 @@ MonoBehaviour:
   dataPointsPerSecond: 10
   feedbackKeyCode: F1
   flagDefinitions:
-  - key: CollectedBlobs
-    typeName: int
+  - key: Health
+    typeName: float

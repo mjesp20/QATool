@@ -16,6 +16,8 @@ namespace QATool
         {
             currentHealth += amount;
             currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
+            
+            QAToolGlobals.SetFlagValue("Health", currentHealth);
 
             Debug.Log("Healed: " + amount + " | Health: " + currentHealth);
         }
@@ -24,6 +26,9 @@ namespace QATool
         {
             currentHealth -= amount;
             currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
+
+
+            QAToolGlobals.SetFlagValue("Health", currentHealth);
 
             Debug.Log("Damage: " + amount + " | Health: " + currentHealth);
 
