@@ -193,6 +193,16 @@ namespace QATool
                 LoadAllFiles();
                 LoadFileAtIndex(0);
             }
+            
+            if (GUILayout.Button("Unload Temporal Trail"))
+            {
+                temporalTrail.Clear();
+                allFiles.Clear();
+                currentFileIndex = 0;
+                currentPointIndex = 0;
+                isPreview = true;
+                SceneView.RepaintAll();
+            }
 
 
             if (allFiles.Count == 0) return;
