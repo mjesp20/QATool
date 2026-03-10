@@ -17,5 +17,3 @@ MonoBehaviour:
   flagDefinitions:
   - key: CollectedBlobs
     typeName: int
-  - key: event
-    typeName: string
