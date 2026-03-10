@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace QATool
+namespace QATool.Sample
 {
     public class QAToolPickup : MonoBehaviour
     {

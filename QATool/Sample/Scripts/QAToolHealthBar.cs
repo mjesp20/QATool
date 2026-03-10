@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace QATool
+namespace QATool.Sample
 {
     public class QAToolHealthBar : MonoBehaviour
     {

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace QATool
+namespace QATool.Sample
 {
     public class QAToolPlayerHealth : MonoBehaviour
     {

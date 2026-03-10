@@ -1,5 +1,5 @@
 using UnityEngine;
-namespace QATool
+namespace QATool.Sample
 {
     public class QAToolSamplePlayerMovement : MonoBehaviour
     {
