@@ -1,54 +1,53 @@
-using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace QATool
+public class PlayReadOnlySceneMenuOptions : Editor
 {
+    [MenuItem("CONTEXT/SceneAsset/Play")]
+    private static void Play(MenuCommand menuCommand) => Play(menuCommand.context as SceneAsset);
 
+    [MenuItem("Assets/Play")]
+    private static void Play() => Play(Selection.activeObject as SceneAsset);
 
-    public class QAToolPlayScene : Editor
+    [MenuItem("Assets/Play", true)]
+    private static bool SceneAssetValidation()
     {
-        [MenuItem("CONTEXT/SceneAsset/Play")]
-        private static void Play(MenuCommand menuCommand) => Play(menuCommand.context as SceneAsset);
+        return Selection.activeObject is SceneAsset && Selection.objects.Length == 1;
+    }
 
-        [MenuItem("Assets/Play")]
-        private static void Play() => Play(Selection.activeObject as SceneAsset);
+    private static void Play(SceneAsset scene)
+    {
+        // Store the full asset path instead of just the name
+        string scenePath = AssetDatabase.GetAssetPath(scene);
+        Debug.Log($"{nameof(Play)} {scene.name} ({scenePath})");
 
-        [MenuItem("Assets/Play", true)]
-        private static bool SceneAssetValidation()
+        if (Application.isPlaying)
         {
-            return Selection.activeObject is SceneAsset && Selection.objects.Length == 1;
+            // Use LoadSceneInPlayMode to bypass build settings requirement
+            EditorSceneManager.LoadSceneInPlayMode(scenePath, new LoadSceneParameters(LoadSceneMode.Single));
         }
-
-        private static void Play(SceneAsset scene)
+        else
         {
-            Debug.Log($"{nameof(Play)} {scene.name}");
-            if (Application.isPlaying)
+            if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
             {
-                SceneManager.LoadScene(scene.name);
-            }
-            else
-            {
-                if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
-                {
-                    EditorPrefs.SetString(nameof(QAToolPlayScene), scene.name); //For some reason setting a variable was not working. Using EditorPrefs as a workaround.
-                    EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-                    EditorApplication.isPlaying = true;
-                }
+                EditorPrefs.SetString(nameof(PlayReadOnlySceneMenuOptions), scenePath);
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                EditorApplication.isPlaying = true;
             }
         }
+    }
 
-        [RuntimeInitializeOnLoadMethod]
-        private static void OnRuntimeMethodLoad()
+    [RuntimeInitializeOnLoadMethod]
+    private static void OnRuntimeMethodLoad()
+    {
+        string scenePath = EditorPrefs.GetString(nameof(PlayReadOnlySceneMenuOptions));
+        if (!string.IsNullOrWhiteSpace(scenePath))
         {
-            string sceneName = EditorPrefs.GetString(nameof(QAToolPlayScene));
-            if (!string.IsNullOrWhiteSpace(sceneName))
-            {
-                EditorPrefs.DeleteKey(nameof(QAToolPlayScene));
-                SceneManager.LoadScene(sceneName);
-            }
+            EditorPrefs.DeleteKey(nameof(PlayReadOnlySceneMenuOptions));
+            // LoadSceneInPlayMode loads by asset path, no build settings needed
+            EditorSceneManager.LoadSceneInPlayMode(scenePath, new LoadSceneParameters(LoadSceneMode.Single));
         }
     }
 }
