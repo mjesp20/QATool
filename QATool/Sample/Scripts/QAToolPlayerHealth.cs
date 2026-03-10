@@ -36,6 +36,7 @@ namespace QATool
         void Die()
         {
             Debug.Log("Player died");
+            QAToolGlobals.Event(new System.Collections.Generic.Dictionary<string, object> { { "event", "Player died" } });
         }
     }
 }

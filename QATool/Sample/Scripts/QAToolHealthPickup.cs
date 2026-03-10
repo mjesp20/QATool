@@ -16,7 +16,7 @@ namespace QATool
                 {
                     health.Heal(healAmount);
                 }
-
+                QAToolGlobals.Event(new System.Collections.Generic.Dictionary<string, object> { { "event", "HP Pickup" } });
                 // Destroy the pickup after being collected
                 Destroy(gameObject);
             }
