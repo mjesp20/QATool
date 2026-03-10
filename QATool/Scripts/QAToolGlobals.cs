@@ -62,6 +62,8 @@ namespace QATool
 
         public static void SetFlagValue(string key, object value) => _flagValues[key] = value;
 
+        public static void Event(Dictionary<string,object> dict) => QAToolPlayerTracker.Instance.QAToolEvent(dict);
+
         public static float dataPointsPerSecond
         {
             get => QAToolConfig.Instance?.dataPointsPerSecond ?? 10f;

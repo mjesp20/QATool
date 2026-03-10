@@ -26,6 +26,7 @@ namespace QATool
 
         IEnumerator CooldownRoutine()
         {
+            QAToolGlobals.Event(new System.Collections.Generic.Dictionary<string, object> { { "event", "Collected Blob" } });
             QAToolGlobals.SetFlagValue("CollectedBlobs", collected++);
             _renderer.material = cooldownMaterial;
 

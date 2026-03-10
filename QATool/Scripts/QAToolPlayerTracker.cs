@@ -8,6 +8,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using QATool;
 using Unity.VisualScripting;
+using System.Linq;
 
 
 
@@ -20,9 +21,25 @@ public class QAToolPlayerTracker : MonoBehaviour
     private string filePath;
     private KeyCode keyCode;
     Button submitButton;
+    Rigidbody rigidBody;
+    private static QAToolPlayerTracker instance;
+    public static QAToolPlayerTracker Instance
+    {
+        set { instance = value; }
+        get
+        {
+            if (instance == null)
+            {
+                throw new Exception("No PlayerTracker found");
+            }
+            return instance;
+        }
+    }
+
 
     void Awake()
     {
+        instance = this;
         dataPointsPerSecond = QAToolGlobals.dataPointsPerSecond;
         if (!Directory.Exists(QAToolGlobals.folderPath))
         {
@@ -40,6 +57,10 @@ public class QAToolPlayerTracker : MonoBehaviour
         }
         highest++;
         filePath = Path.Combine(QAToolGlobals.folderPath, $"{highest}.jsonl");
+        if (!TryGetComponent<Rigidbody>(out rigidBody))
+        {
+            throw new Exception("Player Must have RigidBody");
+        } 
     }
 
     void Start()
@@ -71,6 +92,8 @@ public class QAToolPlayerTracker : MonoBehaviour
         var entry = new Dictionary<string, object>
         {
             { "PlayerPosition", new { transform.position.x, transform.position.y, transform.position.z } },
+            { "PlayerVelocity", new { rigidBody.linearVelocity.x, rigidBody.linearVelocity.y, rigidBody.linearVelocity.z } },
+            { "PlayerCamera", new { Camera.main.transform.rotation.x, Camera.main.transform.rotation.y, Camera.main.transform.rotation.z } },
             { "type", type.ToString() },
             { "time", playSessionDuration },
             { "playerID", 1 },
@@ -137,5 +160,10 @@ public class QAToolPlayerTracker : MonoBehaviour
         PrintJSON(QAToolJSONTypes.FeedbackNote, new Dictionary<string, object> { { "note", inputField.text } });
         Destroy(submitButton.gameObject);
         Destroy(inputField.gameObject);
+    }
+    public void QAToolEvent(Dictionary<string,object> dict)
+    {
+        QAToolGlobals.flagValues.ToList().ForEach(x => dict.Add(x.Key, x.Value));
+        PrintJSON(QAToolJSONTypes.Event, dict);
     }
 }

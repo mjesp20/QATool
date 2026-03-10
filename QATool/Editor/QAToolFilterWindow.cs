@@ -235,7 +235,7 @@ namespace QATool
                     if (entry?.args == null) continue;
                     foreach (var key in entry.args.Keys)
                     {
-                        if (key != "note")
+                        if (key != "note" && key != "event")
                             keys.Add(key);
                     }
                 }
