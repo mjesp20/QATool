@@ -17608,15 +17608,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 8852383979650533047}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: edfc0950269f3df4599a3c177518cd23, type: 3}
+  m_Script: {fileID: 11500000, guid: 481976979a780bc4b939a7cc3b05af00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   projectilePrefab: {fileID: 6501440927840671053, guid: 5dfb53864d7d04f4facb0d7b59db734f, type: 3}
-  firePoint: {fileID: 7128561270843631234}
   minShootInterval: 1
   maxShootInterval: 3
-  projectileSpeed: 40
+  projectileSpeed: 10
   projectileLifetime: 5
+  projectileDamage: 20
 --- !u!65 &428829560800846279
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -17769,15 +17769,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 5818428800284368395}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: edfc0950269f3df4599a3c177518cd23, type: 3}
+  m_Script: {fileID: 11500000, guid: 481976979a780bc4b939a7cc3b05af00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   projectilePrefab: {fileID: 6501440927840671053, guid: 5dfb53864d7d04f4facb0d7b59db734f, type: 3}
-  firePoint: {fileID: 5086682639169457804}
   minShootInterval: 1
   maxShootInterval: 3
-  projectileSpeed: 40
+  projectileSpeed: 10
   projectileLifetime: 5
+  projectileDamage: 20
 --- !u!4 &1289739240535206946
 Transform:
   m_ObjectHideFlags: 0
@@ -18549,15 +18549,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 2805778195317842823}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: edfc0950269f3df4599a3c177518cd23, type: 3}
+  m_Script: {fileID: 11500000, guid: 481976979a780bc4b939a7cc3b05af00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   projectilePrefab: {fileID: 6501440927840671053, guid: 5dfb53864d7d04f4facb0d7b59db734f, type: 3}
-  firePoint: {fileID: 8728491102990982691}
   minShootInterval: 1
   maxShootInterval: 3
-  projectileSpeed: 40
+  projectileSpeed: 10
   projectileLifetime: 5
+  projectileDamage: 20
 --- !u!33 &4265535529210294880
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -18575,15 +18575,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 3347962156393762715}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: edfc0950269f3df4599a3c177518cd23, type: 3}
+  m_Script: {fileID: 11500000, guid: 481976979a780bc4b939a7cc3b05af00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   projectilePrefab: {fileID: 6501440927840671053, guid: 5dfb53864d7d04f4facb0d7b59db734f, type: 3}
-  firePoint: {fileID: 7062892732144763109}
   minShootInterval: 1
   maxShootInterval: 3
-  projectileSpeed: 40
+  projectileSpeed: 10
   projectileLifetime: 5
+  projectileDamage: 20
 --- !u!65 &4318476845855479289
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -18882,15 +18882,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 5707948949865218325}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: edfc0950269f3df4599a3c177518cd23, type: 3}
+  m_Script: {fileID: 11500000, guid: 481976979a780bc4b939a7cc3b05af00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   projectilePrefab: {fileID: 6501440927840671053, guid: 5dfb53864d7d04f4facb0d7b59db734f, type: 3}
-  firePoint: {fileID: 6745350822392380945}
   minShootInterval: 1
   maxShootInterval: 3
-  projectileSpeed: 40
+  projectileSpeed: 10
   projectileLifetime: 5
+  projectileDamage: 20
 --- !u!4 &5358217674794482128
 Transform:
   m_ObjectHideFlags: 0
@@ -18984,15 +18984,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 1586340368325908103}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: edfc0950269f3df4599a3c177518cd23, type: 3}
+  m_Script: {fileID: 11500000, guid: 481976979a780bc4b939a7cc3b05af00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   projectilePrefab: {fileID: 6501440927840671053, guid: 5dfb53864d7d04f4facb0d7b59db734f, type: 3}
-  firePoint: {fileID: 5281141121112547369}
   minShootInterval: 1
   maxShootInterval: 3
-  projectileSpeed: 40
+  projectileSpeed: 10
   projectileLifetime: 5
+  projectileDamage: 20
 --- !u!1 &5642493379391989698
 GameObject:
   m_ObjectHideFlags: 0

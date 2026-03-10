@@ -5,7 +5,7 @@ namespace QATool.Sample
     public class TurretShooter : MonoBehaviour
     {
         public GameObject projectilePrefab;
-        public Transform firePoint;
+        Transform firePoint;
 
         public float minShootInterval = 1f;
         public float maxShootInterval = 3f;
@@ -18,6 +18,7 @@ namespace QATool.Sample
 
         void Start()
         {
+            firePoint = this.transform;
             currentShootInterval = Random.Range(minShootInterval, maxShootInterval);
         }
 
