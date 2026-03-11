@@ -4,8 +4,6 @@ namespace QATool.Sample
 {
     public class TurretShooter : MonoBehaviour
     {
-        public GameObject projectilePrefab;
-        Transform firePoint;
 
         public float minShootInterval = 1f;
         public float maxShootInterval = 3f;
@@ -18,7 +16,6 @@ namespace QATool.Sample
 
         void Start()
         {
-            firePoint = this.transform;
             currentShootInterval = Random.Range(minShootInterval, maxShootInterval);
         }
 
@@ -35,14 +32,13 @@ namespace QATool.Sample
 
         void Shoot()
         {
-            GameObject proj = Instantiate(projectilePrefab, firePoint.position, firePoint.rotation);
-            QAToolProjectile projScript = proj.GetComponent<QAToolProjectile>();
-            if (projScript != null)
-            {
-                projScript.speed = projectileSpeed;
-                projScript.lifetime = projectileLifetime;
-                projScript.damage = projectileDamage;
-            }
+            GameObject proj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            proj.transform.position = this.transform.position;
+            QAToolProjectile projScript = proj.AddComponent<QAToolProjectile>();
+            projScript.speed = projectileSpeed;
+            projScript.lifetime = projectileLifetime;
+            projScript.damage = projectileDamage;
+            proj.GetComponent<Renderer>().material.color = Color.red;
         }
     }
 }

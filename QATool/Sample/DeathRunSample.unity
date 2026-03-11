@@ -17611,10 +17611,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 481976979a780bc4b939a7cc3b05af00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  projectilePrefab: {fileID: 6501440927840671053, guid: 5dfb53864d7d04f4facb0d7b59db734f, type: 3}
   minShootInterval: 1
   maxShootInterval: 3
-  projectileSpeed: 10
+  projectileSpeed: -10
   projectileLifetime: 5
   projectileDamage: 20
 --- !u!65 &428829560800846279
@@ -17772,10 +17771,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 481976979a780bc4b939a7cc3b05af00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  projectilePrefab: {fileID: 6501440927840671053, guid: 5dfb53864d7d04f4facb0d7b59db734f, type: 3}
   minShootInterval: 1
   maxShootInterval: 3
-  projectileSpeed: 10
+  projectileSpeed: -10
   projectileLifetime: 5
   projectileDamage: 20
 --- !u!4 &1289739240535206946
@@ -18552,7 +18550,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 481976979a780bc4b939a7cc3b05af00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  projectilePrefab: {fileID: 6501440927840671053, guid: 5dfb53864d7d04f4facb0d7b59db734f, type: 3}
   minShootInterval: 1
   maxShootInterval: 3
   projectileSpeed: 10
@@ -18578,7 +18575,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 481976979a780bc4b939a7cc3b05af00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  projectilePrefab: {fileID: 6501440927840671053, guid: 5dfb53864d7d04f4facb0d7b59db734f, type: 3}
   minShootInterval: 1
   maxShootInterval: 3
   projectileSpeed: 10
@@ -18885,7 +18881,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 481976979a780bc4b939a7cc3b05af00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  projectilePrefab: {fileID: 6501440927840671053, guid: 5dfb53864d7d04f4facb0d7b59db734f, type: 3}
   minShootInterval: 1
   maxShootInterval: 3
   projectileSpeed: 10
@@ -18987,10 +18982,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 481976979a780bc4b939a7cc3b05af00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  projectilePrefab: {fileID: 6501440927840671053, guid: 5dfb53864d7d04f4facb0d7b59db734f, type: 3}
   minShootInterval: 1
   maxShootInterval: 3
-  projectileSpeed: 10
+  projectileSpeed: -10
   projectileLifetime: 5
   projectileDamage: 20
 --- !u!1 &5642493379391989698
