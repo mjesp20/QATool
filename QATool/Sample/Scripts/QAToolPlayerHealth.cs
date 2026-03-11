@@ -61,6 +61,8 @@ namespace QATool.Sample
         {
             Debug.Log("Player died");
             QAToolGlobals.Event(new System.Collections.Generic.Dictionary<string, object> { { "event", "Player died" } });
+            
+            Destroy(gameObject);
         }
     }
 }
