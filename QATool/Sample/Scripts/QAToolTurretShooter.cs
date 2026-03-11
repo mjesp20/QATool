@@ -35,10 +35,18 @@ namespace QATool.Sample
             GameObject proj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             proj.transform.position = this.transform.position;
             QAToolProjectile projScript = proj.AddComponent<QAToolProjectile>();
+            
             projScript.speed = projectileSpeed;
             projScript.lifetime = projectileLifetime;
             projScript.damage = projectileDamage;
+
             proj.GetComponent<Renderer>().material.color = Color.red;
+
+            Collider col = proj.GetComponent<Collider>();
+            if (col != null)
+            {
+                col.isTrigger = true;
+            }
         }
     }
 }
