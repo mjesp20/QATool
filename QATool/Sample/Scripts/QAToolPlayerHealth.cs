@@ -61,7 +61,7 @@ namespace QATool.Sample
         {
             Debug.Log("Player died");
             QAToolGlobals.Event(new System.Collections.Generic.Dictionary<string, object> { { "event", "Player died" } });
-            
+            Camera.main.gameObject.transform.parent = null;
             Destroy(gameObject);
         }
     }
