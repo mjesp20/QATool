@@ -34537,7 +34537,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5594edb442e397b4ea94b2de8bfc2d7a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  areaSize: {x: 10, y: 10}
+  areaSize: {x: 13.07, y: 15.33}
   spawnHeight: 12
   spawnRate: 0.5
   fireballFallSpeed: 5
