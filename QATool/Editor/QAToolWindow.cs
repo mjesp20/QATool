@@ -29,7 +29,7 @@ namespace QATool
         void OnDisable()
         {
             SceneView.duringSceneGui -= OnSceneGUI;
-            AssetDatabase.SaveAssets();
+            // EditorPrefs saves automatically — no AssetDatabase.SaveAssets() needed
         }
 
         [MenuItem("Window/QA Tool")]
@@ -49,7 +49,6 @@ namespace QATool
             if (GUILayout.Button("Flags"))
                 QAToolFlagWindow.ShowWindow();
 
-
             if (Event.current.type == EventType.Repaint)
                 popupButtonRect = GUILayoutUtility.GetLastRect();
 
@@ -57,32 +56,22 @@ namespace QATool
                 DrawPlayerTrails();
 
             EditorGUI.BeginChangeCheck();
-            QAToolGlobals.showGhostTrails = EditorGUILayout.Toggle("Show Ghost Trails", QAToolGlobals.showGhostTrails);
-            QAToolGlobals.showHeatMap = EditorGUILayout.Toggle("Show Heat Map", QAToolGlobals.showHeatMap);
-            QAToolGlobals.showFeedbackNotes = EditorGUILayout.Toggle("Show Feedback Notes", QAToolGlobals.showFeedbackNotes);
+            QAToolGlobals.showGhostTrails    = EditorGUILayout.Toggle("Show Ghost Trails",    QAToolGlobals.showGhostTrails);
+            QAToolGlobals.showHeatMap        = EditorGUILayout.Toggle("Show Heat Map",        QAToolGlobals.showHeatMap);
+            QAToolGlobals.showFeedbackNotes  = EditorGUILayout.Toggle("Show Feedback Notes",  QAToolGlobals.showFeedbackNotes);
 
             QAToolGlobals.feedbackKeyCode = EditorGUILayout.TextArea(QAToolGlobals.feedbackKeyCode);
 
-
-            //---------------Enable/Disable-----------------------------
-            //---------------Float field Øverst-------------------------
-            //---------------Slider Nederst-----------------------------
             QAToolGlobals.dataPointsPerSecond = EditorGUILayout.FloatField("Data Points Per Second", QAToolGlobals.dataPointsPerSecond);
-            //QAToolGlobals.dataPointsPerSecond  = EditorGUILayout.Slider("Data Points logged Per Second", QAToolGlobals.dataPointsPerSecond, 0.1f, 20
-            QAToolGlobals.heatmapCellSize = EditorGUILayout.Slider("Cell Size", QAToolGlobals.heatmapCellSize, 0.2f, 5f);
-            QAToolGlobals.heatmapOpacity = EditorGUILayout.Slider("Opacity", QAToolGlobals.heatmapOpacity, 0f, 1f);
-            QAToolGlobals.heatmapContrast = EditorGUILayout.Slider("Contrast", QAToolGlobals.heatmapContrast, 0f, 3f);
+            QAToolGlobals.heatmapCellSize     = EditorGUILayout.Slider("Cell Size",  QAToolGlobals.heatmapCellSize,  0.2f, 5f);
+            QAToolGlobals.heatmapOpacity      = EditorGUILayout.Slider("Opacity",    QAToolGlobals.heatmapOpacity,   0f,   1f);
+            QAToolGlobals.heatmapContrast     = EditorGUILayout.Slider("Contrast",   QAToolGlobals.heatmapContrast,  0f,   3f);
 
             EditorGUILayout.LabelField("Percentile Range");
             float min = QAToolGlobals.heatmapMinPercentile;
             float max = QAToolGlobals.heatmapMaxPercentile;
 
-            EditorGUILayout.MinMaxSlider(
-                ref min,
-                ref max,
-                0f,
-                1f
-            );
+            EditorGUILayout.MinMaxSlider(ref min, ref max, 0f, 1f);
 
             EditorGUILayout.BeginHorizontal();
             min = EditorGUILayout.FloatField(min, GUILayout.MaxWidth(50));
@@ -92,21 +81,16 @@ namespace QATool
             QAToolGlobals.heatmapMaxPercentile = Mathf.Clamp01(max);
 
             if (EditorGUI.EndChangeCheck())
-            {
                 UpdateScene();
-            }
 
             DrawTemporalTrail();
-
-
         }
+
         public void UpdateScene()
         {
             QAToolSceneValidator.ForceValidate();
             DrawPlayerTrails();
             SceneView.RepaintAll();
-
-
         }
 
         public static void DrawFeedbackNotes()
@@ -115,12 +99,8 @@ namespace QATool
 
             List<QAToolTelemetryClass.Entry> notes = QAToolTelemetryLoader.GetAllEntries(QAToolJSONTypes.FeedbackNote);
             foreach (QAToolTelemetryClass.Entry note in notes)
-            {
                 Handles.Label(note.PlayerPosition.ToVector3(), note.args["note"].ToString());
-            }
         }
-
-        static bool trailsDirty = true;
 
         static void OnSceneGUI(SceneView sceneView)
         {
@@ -128,8 +108,8 @@ namespace QATool
             {
                 Color[] trailColors =
                 {
-                Color.red, Color.cyan, Color.green, Color.yellow, Color.magenta
-            };
+                    Color.red, Color.cyan, Color.green, Color.yellow, Color.magenta
+                };
 
                 for (int t = 0; t < allTrails.Count; t++)
                 {
@@ -137,9 +117,7 @@ namespace QATool
                     if (trail == null || trail.Count == 0) continue;
 
                     Handles.color = trailColors[t % trailColors.Length];
-
                     for (int i = 0; i < trail.Count - 1; i++)
-
                         Handles.DrawLine(trail[i], trail[i + 1]);
                 }
             }
@@ -148,11 +126,9 @@ namespace QATool
             {
                 Handles.color = Color.white;
 
-                int drawUpTo = isPreview ? temporalTrail.Count - 1 : currentPointIndex;
-
-                float thickness = isPreview ? 6f : 4f; //Hurtig Hardcode
+                int   drawUpTo   = isPreview ? temporalTrail.Count - 1 : currentPointIndex;
+                float thickness  = isPreview ? 6f : 4f;
                 Handles.DrawAAPolyLine(thickness, temporalTrail.Take(drawUpTo + 1).ToArray());
-
                 Handles.DrawSolidDisc(temporalTrail[currentPointIndex], Vector3.up, 0.2f);
             }
 
@@ -176,15 +152,11 @@ namespace QATool
                 if (positions.Count > 0)
                     allTrails.Add(positions);
             }
-
-            trailsDirty = false;
             SceneView.RepaintAll();
         }
 
         private void DrawTemporalTrail()
         {
-
-
             GUILayout.Space(10);
             GUILayout.Label("Temporal Trail", EditorStyles.boldLabel);
 
@@ -193,17 +165,16 @@ namespace QATool
                 LoadAllFiles();
                 LoadFileAtIndex(0);
             }
-            
+
             if (GUILayout.Button("Unload Temporal Trail"))
             {
                 temporalTrail.Clear();
                 allFiles.Clear();
-                currentFileIndex = 0;
+                currentFileIndex  = 0;
                 currentPointIndex = 0;
-                isPreview = true;
+                isPreview         = true;
                 SceneView.RepaintAll();
             }
-
 
             if (allFiles.Count == 0) return;
 
@@ -236,42 +207,21 @@ namespace QATool
             GUILayout.Space(4);
             GUILayout.Label($"Point: {currentPointIndex} / {temporalTrail.Count - 1}");
 
-
             EditorGUILayout.BeginHorizontal();
-            /*
-            EditorGUI.BeginDisabledGroup(currentPointIndex <= 0);
-            if (GUILayout.Button("◀ Prev"))
-            {
-                currentPointIndex--;
-                isPreview = false;
-                SceneView.RepaintAll();
-            }
-            EditorGUI.EndDisabledGroup();
-
-            EditorGUI.BeginDisabledGroup(currentPointIndex >= temporalTrail.Count - 1);
-            if (GUILayout.Button("Next ▶"))
-            {
-                currentPointIndex++;
-                isPreview = false;
-                SceneView.RepaintAll();
-            }
-
-            EditorGUI.EndDisabledGroup();
-            */
             EditorGUILayout.EndHorizontal();
 
             int newIndex = (int)EditorGUILayout.Slider("Scrub", currentPointIndex, 0, temporalTrail.Count - 1);
             if (newIndex != currentPointIndex)
             {
                 currentPointIndex = newIndex;
-                isPreview = false;
+                isPreview         = false;
                 SceneView.RepaintAll();
             }
         }
 
         private static void LoadAllFiles()
         {
-            allFiles = QAToolTelemetryLoader.GetAllPositionsByFile().ToList();
+            allFiles         = QAToolTelemetryLoader.GetAllPositionsByFile().ToList();
             currentFileIndex = 0;
         }
 
@@ -279,9 +229,9 @@ namespace QATool
         {
             if (allFiles.Count == 0 || index < 0 || index >= allFiles.Count) return;
 
-            temporalTrail = allFiles[index].Select(e => e.PlayerPosition.ToVector3()).ToList();
+            temporalTrail     = allFiles[index].Select(e => e.PlayerPosition.ToVector3()).ToList();
             currentPointIndex = 0;
-            isPreview = true;
+            isPreview         = true;
             SceneView.RepaintAll();
         }
 
@@ -290,9 +240,5 @@ namespace QATool
             currentFileIndex = index;
             LoadFileAtIndex(index);
         }
-
-
-
-
     }
 }

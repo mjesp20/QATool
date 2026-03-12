@@ -1,47 +1,47 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using UnityEngine;
 using System.Linq;
+using UnityEngine;
 
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
+
 namespace QATool
 {
     public static class QAToolGlobals
     {
-        public static string name = "QATool";
+        public static string name          = "QATool";
         public static string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        public static string folderPath = Path.Combine(documentsPath, name, Application.productName);
+        public static string folderPath    = Path.Combine(documentsPath, name, Application.productName);
 
         // -------------------------------------------------------------------
-        // Flag types — sourced from ScriptableObject, available in builds
+        // Flag types — editor writes to EditorPrefs via QAToolConfig;
+        //              builds read from the baked JSON via QAToolConfig
         // -------------------------------------------------------------------
         public static Dictionary<string, Type> flagTypes
         {
-            get => QAToolConfig.Instance?.GetFlagTypes();
+            get => QAToolConfig.GetFlagTypes();
 #if UNITY_EDITOR
             set
             {
-                var config = QAToolConfig.Instance;
-                if (config == null) return;
-
-                config.flagDefinitions = value?.Select(kvp => new QAToolConfig.FlagDefinition
-                {
-                    key = kvp.Key,
-                    typeName = typeNameToString[kvp.Value.Name]
-                }).ToList() ?? new();
-
-                EditorUtility.SetDirty(config);
+                QAToolConfig.FlagDefinitions = value?
+                    .Select(kvp => new QAToolConfigData.FlagDefinition
+                    {
+                        key      = kvp.Key,
+                        typeName = typeNameToString[kvp.Value.Name]
+                    })
+                    .ToList()
+                    ?? new List<QAToolConfigData.FlagDefinition>();
             }
 #endif
         }
 
         // -------------------------------------------------------------------
-        // Flag values — runtime read/write, used by gameplay scripts
+        // Flag values — runtime read / write used by gameplay scripts
         // -------------------------------------------------------------------
-        private static readonly Dictionary<string, object> _flagValues = new();
+        private static readonly Dictionary<string, object> _flagValues = new Dictionary<string, object>();
 
         public static Dictionary<string, object> flagValues
         {
@@ -58,42 +58,33 @@ namespace QATool
             }
         }
 
-        public static object GetFlagValue(string key) => _flagValues.GetValueOrDefault(key);
+        public static object GetFlagValue(string key)              => _flagValues.GetValueOrDefault(key);
+        public static void   SetFlagValue(string key, object value) => _flagValues[key] = value;
 
-        public static void SetFlagValue(string key, object value) => _flagValues[key] = value;
+        public static void Event(Dictionary<string, object> dict) =>
+            QAToolPlayerTracker.Instance.QAToolEvent(dict);
 
-        public static void Event(Dictionary<string,object> dict) => QAToolPlayerTracker.Instance.QAToolEvent(dict);
-
+        // -------------------------------------------------------------------
+        // Config values — EditorPrefs in editor, JSON in builds
+        // -------------------------------------------------------------------
         public static float dataPointsPerSecond
         {
-            get => QAToolConfig.Instance?.dataPointsPerSecond ?? 10f;
+            get => QAToolConfig.DataPointsPerSecond;
 #if UNITY_EDITOR
-            set
-            {
-                var config = QAToolConfig.Instance;
-                if (config == null) return;
-                config.dataPointsPerSecond = value;
-                EditorUtility.SetDirty(config);
-            }
+            set => QAToolConfig.DataPointsPerSecond = value;
 #endif
         }
 
         public static string feedbackKeyCode
         {
-            get => QAToolConfig.Instance?.feedbackKeyCode ?? "F1";
+            get => QAToolConfig.FeedbackKeyCode;
 #if UNITY_EDITOR
-            set
-            {
-                var config = QAToolConfig.Instance;
-                if (config == null) return;
-                config.feedbackKeyCode = value;
-                EditorUtility.SetDirty(config);
-            }
+            set => QAToolConfig.FeedbackKeyCode = value;
 #endif
         }
 
         // -------------------------------------------------------------------
-        // Editor-only prefs (visualization settings, filters, etc.)
+        // Editor-only visualisation / filter prefs
         // -------------------------------------------------------------------
 #if UNITY_EDITOR
         public static bool showGhostTrails
@@ -163,10 +154,10 @@ namespace QATool
                     string[] parts = section.Split(":");
                     if (parts.Length != 4) continue;
 
-                    string key = parts[0];
-                    bool enabled = bool.Parse(parts[1]);
-                    FilterOperator op = (FilterOperator)Enum.Parse(typeof(FilterOperator), parts[2]);
-                    string rawValue = parts[3];
+                    string key         = parts[0];
+                    bool enabled       = bool.Parse(parts[1]);
+                    FilterOperator op  = (FilterOperator)Enum.Parse(typeof(FilterOperator), parts[2]);
+                    string rawValue    = parts[3];
 
                     object value = null;
                     var types = flagTypes;
@@ -197,19 +188,19 @@ namespace QATool
         // -------------------------------------------------------------------
         // Shared types and utilities
         // -------------------------------------------------------------------
-        public static readonly Dictionary<string, string> typeNameToString = new()
-    {
-        { "Int32",   "int"    },
-        { "Single",  "float"  },
-        { "Boolean", "bool"   },
-        { "String",  "string" },
-    };
+        public static readonly Dictionary<string, string> typeNameToString = new Dictionary<string, string>
+        {
+            { "Int32",   "int"    },
+            { "Single",  "float"  },
+            { "Boolean", "bool"   },
+            { "String",  "string" },
+        };
 
         public static object NormalizeType(object input) => input switch
         {
-            long l => (int)l,
+            long   l => (int)l,
             double d => (float)d,
-            _ => input
+            _        => input
         };
 
         public enum FilterOperator
@@ -219,22 +210,22 @@ namespace QATool
             LessThan, LessThanOrEqual
         }
 
-        public static readonly Dictionary<FilterOperator, string> FilterOperatorToString = new()
-    {
-        { FilterOperator.Ignore,             "—" },
-        { FilterOperator.Equal,              "=" },
-        { FilterOperator.NotEqual,           "≠" },
-        { FilterOperator.GreaterThan,        ">" },
-        { FilterOperator.GreaterThanOrEqual, "≥" },
-        { FilterOperator.LessThan,           "<" },
-        { FilterOperator.LessThanOrEqual,    "≤" },
-    };
+        public static readonly Dictionary<FilterOperator, string> FilterOperatorToString = new Dictionary<FilterOperator, string>
+        {
+            { FilterOperator.Ignore,             "—" },
+            { FilterOperator.Equal,              "=" },
+            { FilterOperator.NotEqual,           "≠" },
+            { FilterOperator.GreaterThan,        ">" },
+            { FilterOperator.GreaterThanOrEqual, "≥" },
+            { FilterOperator.LessThan,           "<" },
+            { FilterOperator.LessThanOrEqual,    "≤" },
+        };
 
         public class FlagFilter
         {
-            public bool enabled;
+            public bool           enabled;
             public FilterOperator op;
-            public object value;
+            public object         value;
         }
     }
 }
