@@ -104,7 +104,7 @@ public class QAToolPlayerTracker : MonoBehaviour
         File.AppendAllText(filePath, jsonLine + Environment.NewLine);
     }
 
-    void CreateFeedbackNotesWindow()
+    public void CreateFeedbackNotesWindow(string prompt = null)
     {
         EventSystem eventSystem = FindFirstObjectByType<EventSystem>();
         if (eventSystem == null)
@@ -121,6 +121,17 @@ public class QAToolPlayerTracker : MonoBehaviour
             canvas.gameObject.AddComponent<CanvasScaler>();
             canvas.gameObject.AddComponent<GraphicRaycaster>();
         }
+
+        if (prompt != null)
+        {
+            TextMeshProUGUI promptLabel = new GameObject("Prompt").AddComponent<TextMeshProUGUI>();
+            promptLabel.transform.SetParent(canvas.transform, false);
+            promptLabel.text = prompt;
+            promptLabel.color = Color.black;
+            promptLabel.fontSize = 24;
+            promptLabel.GetComponent<RectTransform>().sizeDelta = new Vector2(500, 400);
+        }
+        
 
         TMP_InputField inputField = new GameObject("InputField").AddComponent<TMP_InputField>();
         inputField.transform.SetParent(canvas.transform, false);
@@ -150,14 +161,20 @@ public class QAToolPlayerTracker : MonoBehaviour
         submitButton = new GameObject("Button").AddComponent<Button>();
         submitButton.AddComponent<RectTransform>();
         submitButton.GetComponent<RectTransform>().sizeDelta = new Vector2(300, 300);
-        submitButton.onClick.AddListener(() => { SubmitNote(inputField); });
+        submitButton.onClick.AddListener(() => { SubmitNote(inputField,prompt); });
         submitButton.AddComponent<Image>();
         submitButton.transform.parent = canvas.gameObject.transform;
     }
 
-    public void SubmitNote(TMP_InputField inputField)
+    public void SubmitNote(TMP_InputField inputField, string prompt)
     {
-        PrintJSON(QAToolJSONTypes.FeedbackNote, new Dictionary<string, object> { { "note", inputField.text } });
+        Dictionary<string, object> dict = new Dictionary<string, object> { { "note", inputField.text } };
+        if (prompt != null)
+        {
+            dict["prompt"] = prompt;
+        }
+        
+        PrintJSON(QAToolJSONTypes.FeedbackNote, dict);
         Destroy(submitButton.gameObject);
         Destroy(inputField.gameObject);
     }
