@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using TMPro;
@@ -9,6 +10,7 @@ using UnityEngine.UI;
 using QATool;
 using Unity.VisualScripting;
 using System.Linq;
+
 
 
 
@@ -104,6 +106,8 @@ public class QAToolPlayerTracker : MonoBehaviour
         File.AppendAllText(filePath, jsonLine + Environment.NewLine);
     }
 
+    GameObject feedbackPanel;
+
     public void CreateFeedbackNotesWindow(string prompt = null)
     {
         EventSystem eventSystem = FindFirstObjectByType<EventSystem>();
@@ -122,48 +126,106 @@ public class QAToolPlayerTracker : MonoBehaviour
             canvas.gameObject.AddComponent<GraphicRaycaster>();
         }
 
+        // Dark background panel
+        feedbackPanel = new GameObject("FeedbackPanel");
+        feedbackPanel.transform.SetParent(canvas.transform, false);
+        Image panelImage = feedbackPanel.AddComponent<Image>();
+        panelImage.color = new Color(0.1f, 0.1f, 0.1f, 0.95f);
+        RectTransform panelRT = feedbackPanel.GetComponent<RectTransform>();
+        panelRT.sizeDelta = new Vector2(560, 320);
+        panelRT.anchoredPosition = Vector2.zero;
+
+        // Accent bar at top of panel
+        GameObject accentBar = new GameObject("AccentBar");
+        accentBar.transform.SetParent(feedbackPanel.transform, false);
+        Image accentImage = accentBar.AddComponent<Image>();
+        accentImage.color = new Color(0f, 0.8f, 0.4f, 1f);
+        RectTransform accentRT = accentBar.GetComponent<RectTransform>();
+        accentRT.sizeDelta = new Vector2(560, 4);
+        accentRT.anchorMin = new Vector2(0.5f, 1f);
+        accentRT.anchorMax = new Vector2(0.5f, 1f);
+        accentRT.anchoredPosition = new Vector2(0, -2);
+
+        // Prompt label
         if (prompt != null)
         {
             TextMeshProUGUI promptLabel = new GameObject("Prompt").AddComponent<TextMeshProUGUI>();
-            promptLabel.transform.SetParent(canvas.transform, false);
+            promptLabel.transform.SetParent(feedbackPanel.transform, false);
             promptLabel.text = prompt;
-            promptLabel.color = Color.black;
-            promptLabel.fontSize = 24;
-            promptLabel.GetComponent<RectTransform>().sizeDelta = new Vector2(500, 400);
+            promptLabel.color = Color.white;
+            promptLabel.fontSize = 18;
+            promptLabel.fontStyle = FontStyles.Bold;
+            promptLabel.alignment = TextAlignmentOptions.TopLeft;
+            RectTransform promptRT = promptLabel.GetComponent<RectTransform>();
+            promptRT.sizeDelta = new Vector2(500, 50);
+            promptRT.anchoredPosition = new Vector2(0, 110);
         }
-        
 
+        // Input field
         TMP_InputField inputField = new GameObject("InputField").AddComponent<TMP_InputField>();
-        inputField.transform.SetParent(canvas.transform, false);
-        inputField.gameObject.AddComponent<Image>();
-        inputField.GetComponent<RectTransform>().sizeDelta = new Vector2(500, 150);
+        inputField.transform.SetParent(feedbackPanel.transform, false);
+        Image inputImage = inputField.gameObject.AddComponent<Image>();
+        inputImage.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+        RectTransform inputRT = inputField.GetComponent<RectTransform>();
+        inputRT.sizeDelta = new Vector2(500, 120);
+        inputRT.anchoredPosition = new Vector2(0, 20);
         inputField.lineType = TMP_InputField.LineType.MultiLineSubmit;
 
         RectTransform textArea = new GameObject("Text Area").AddComponent<RectTransform>();
         textArea.transform.SetParent(inputField.transform, false);
-        textArea.sizeDelta = new Vector2(500, 150);
+        textArea.sizeDelta = new Vector2(480, 110);
         textArea.gameObject.AddComponent<RectMask2D>();
 
         TextMeshProUGUI placeholder = new GameObject("Placeholder").AddComponent<TextMeshProUGUI>();
         placeholder.transform.SetParent(textArea.transform, false);
-        placeholder.text = "Enter text...";
-        placeholder.color = Color.black;
+        placeholder.text = "Type your response here...";
+        placeholder.color = new Color(0.5f, 0.5f, 0.5f, 1f);
+        placeholder.fontSize = 14;
+        placeholder.GetComponent<RectTransform>().sizeDelta = new Vector2(480, 110);
 
         TextMeshProUGUI text = new GameObject("Text").AddComponent<TextMeshProUGUI>();
-        text.GetComponent<RectTransform>().sizeDelta = new Vector2(500, 150);
         text.transform.SetParent(textArea.transform, false);
-        text.color = Color.black;
+        text.color = Color.white;
+        text.fontSize = 14;
+        text.GetComponent<RectTransform>().sizeDelta = new Vector2(480, 110);
 
         inputField.textViewport = textArea.GetComponent<RectTransform>();
         inputField.textComponent = text;
         inputField.placeholder = placeholder;
+        
+        StartCoroutine(FocusInputField(inputField));
+        
+        // Submit button
+        submitButton = new GameObject("SubmitButton").AddComponent<Button>();
+        submitButton.transform.SetParent(feedbackPanel.transform, false);
+        Image buttonImage = submitButton.gameObject.AddComponent<Image>();
+        buttonImage.color = new Color(0f, 0.8f, 0.4f, 1f);
+        RectTransform buttonRT = submitButton.GetComponent<RectTransform>();
+        buttonRT.sizeDelta = new Vector2(500, 40);
+        buttonRT.anchoredPosition = new Vector2(0, -110);
 
-        submitButton = new GameObject("Button").AddComponent<Button>();
-        submitButton.AddComponent<RectTransform>();
-        submitButton.GetComponent<RectTransform>().sizeDelta = new Vector2(300, 300);
-        submitButton.onClick.AddListener(() => { SubmitNote(inputField,prompt); });
-        submitButton.AddComponent<Image>();
-        submitButton.transform.parent = canvas.gameObject.transform;
+        TextMeshProUGUI buttonText = new GameObject("ButtonText").AddComponent<TextMeshProUGUI>();
+        buttonText.transform.SetParent(submitButton.transform, false);
+        buttonText.text = "SUBMIT";
+        buttonText.color = Color.white;
+        buttonText.fontSize = 16;
+        buttonText.fontStyle = FontStyles.Bold;
+        buttonText.alignment = TextAlignmentOptions.Center;
+        buttonText.GetComponent<RectTransform>().sizeDelta = new Vector2(500, 40);
+
+        ColorBlock colors = submitButton.colors;
+        colors.highlightedColor = new Color(0f, 1f, 0.5f, 1f);
+        colors.pressedColor = new Color(0f, 0.6f, 0.3f, 1f);
+        submitButton.colors = colors;
+
+        submitButton.onClick.AddListener(() => { SubmitNote(inputField, prompt); });
+    }
+    
+    private IEnumerator FocusInputField(TMP_InputField inputField)
+    {
+        yield return null;
+        inputField.ActivateInputField();
+        inputField.Select();
     }
 
     public void SubmitNote(TMP_InputField inputField, string prompt)
@@ -173,11 +235,12 @@ public class QAToolPlayerTracker : MonoBehaviour
         {
             dict["prompt"] = prompt;
         }
-        
+
         PrintJSON(QAToolJSONTypes.FeedbackNote, dict);
-        Destroy(submitButton.gameObject);
-        Destroy(inputField.gameObject);
+        Destroy(feedbackPanel);
     }
+
+
     public void QAToolEvent(Dictionary<string,object> dict)
     {
         QAToolGlobals.flagValues.ToList().ForEach(x => dict.Add(x.Key, x.Value));
