@@ -38,6 +38,8 @@ public class QAToolPlayerTracker : MonoBehaviour
         }
     }
 
+    bool showingFeedbackNoteWindow = false;
+
 
     void Awake()
     {
@@ -83,8 +85,9 @@ public class QAToolPlayerTracker : MonoBehaviour
             PrintJSON(QAToolJSONTypes.Movement, QAToolGlobals.flagValues);
         }
 
-        if (Input.GetKeyDown(keyCode))
+        if (Input.GetKeyDown(keyCode) && !showingFeedbackNoteWindow)
         {
+
             CreateFeedbackNotesWindow();
         }
     }
@@ -110,6 +113,8 @@ public class QAToolPlayerTracker : MonoBehaviour
 
     public void CreateFeedbackNotesWindow(string prompt = null, Color? accentColor = null)
     {
+        showingFeedbackNoteWindow = true;
+
         Color accent = accentColor ?? new Color(0f, 0.8f, 0.4f, 1f);
         
         EventSystem eventSystem = FindFirstObjectByType<EventSystem>();
@@ -242,6 +247,7 @@ public class QAToolPlayerTracker : MonoBehaviour
 
         PrintJSON(QAToolJSONTypes.FeedbackNote, dict);
         Destroy(feedbackPanel);
+        showingFeedbackNoteWindow = false;
         Time.timeScale = timeScale;
     }
 
