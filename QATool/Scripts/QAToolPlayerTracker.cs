@@ -108,8 +108,10 @@ public class QAToolPlayerTracker : MonoBehaviour
 
     GameObject feedbackPanel;
 
-    public void CreateFeedbackNotesWindow(string prompt = null)
+    public void CreateFeedbackNotesWindow(string prompt = null, Color? accentColor = null)
     {
+        Color accent = accentColor ?? new Color(0f, 0.8f, 0.4f, 1f);
+        
         EventSystem eventSystem = FindFirstObjectByType<EventSystem>();
         if (eventSystem == null)
         {
@@ -139,7 +141,7 @@ public class QAToolPlayerTracker : MonoBehaviour
         GameObject accentBar = new GameObject("AccentBar");
         accentBar.transform.SetParent(feedbackPanel.transform, false);
         Image accentImage = accentBar.AddComponent<Image>();
-        accentImage.color = new Color(0f, 0.8f, 0.4f, 1f);
+        accentImage.color = accent;
         RectTransform accentRT = accentBar.GetComponent<RectTransform>();
         accentRT.sizeDelta = new Vector2(560, 4);
         accentRT.anchorMin = new Vector2(0.5f, 1f);
@@ -199,7 +201,7 @@ public class QAToolPlayerTracker : MonoBehaviour
         submitButton = new GameObject("SubmitButton").AddComponent<Button>();
         submitButton.transform.SetParent(feedbackPanel.transform, false);
         Image buttonImage = submitButton.gameObject.AddComponent<Image>();
-        buttonImage.color = new Color(0f, 0.8f, 0.4f, 1f);
+        buttonImage.color = accent;
         RectTransform buttonRT = submitButton.GetComponent<RectTransform>();
         buttonRT.sizeDelta = new Vector2(500, 40);
         buttonRT.anchoredPosition = new Vector2(0, -110);
@@ -214,8 +216,8 @@ public class QAToolPlayerTracker : MonoBehaviour
         buttonText.GetComponent<RectTransform>().sizeDelta = new Vector2(500, 40);
 
         ColorBlock colors = submitButton.colors;
-        colors.highlightedColor = new Color(0f, 1f, 0.5f, 1f);
-        colors.pressedColor = new Color(0f, 0.6f, 0.3f, 1f);
+        colors.highlightedColor = new Color(accent.r + 0.1f, accent.g + 0.1f, accent.b + 0.1f, 1f);
+        colors.pressedColor = new Color(accent.r - 0.2f, accent.g - 0.2f, accent.b - 0.2f, 1f);
         submitButton.colors = colors;
 
         submitButton.onClick.AddListener(() => { SubmitNote(inputField, prompt); });

@@ -28,7 +28,7 @@ namespace QATool
             if (!other.CompareTag("Player")) return;
 
             hasTriggered = true;
-            QAToolPlayerTracker.Instance.CreateFeedbackNotesWindow(prompt);
+            QAToolPlayerTracker.Instance.CreateFeedbackNotesWindow(prompt, gizmoColor);
         }
 
         void OnDrawGizmos()
