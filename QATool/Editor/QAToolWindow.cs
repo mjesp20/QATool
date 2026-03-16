@@ -102,6 +102,7 @@ namespace QATool
             QAToolGlobals.showGhostTrails = EditorGUILayout.Toggle("Show Ghost Trails", QAToolGlobals.showGhostTrails);
             QAToolGlobals.showHeatMap = EditorGUILayout.Toggle("Show Heat Map", QAToolGlobals.showHeatMap);
             QAToolGlobals.showFeedbackNotes = EditorGUILayout.Toggle("Show Feedback Notes", QAToolGlobals.showFeedbackNotes);
+            QAToolGlobals.showEvents = EditorGUILayout.Toggle("Show Events", QAToolGlobals.showEvents);
             QAToolGlobals.feedbackKeyCode = EditorGUILayout.TextArea(QAToolGlobals.feedbackKeyCode);
             QAToolGlobals.dataPointsPerSecond = EditorGUILayout.FloatField("Data Points Per Second", QAToolGlobals.dataPointsPerSecond);
         }
@@ -195,6 +196,7 @@ namespace QATool
         {
             DrawGhostTrails();
             DrawFeedbackNotes();
+            DrawEvents();
             DrawTemporalTrail();
         }
 
@@ -227,6 +229,48 @@ namespace QATool
         }
 
 
+        private static void DrawEvents()
+        {
+            if (!QAToolGlobals.showEvents || cachedEntries == null)
+                return;
+
+            if (Event.current.type != EventType.Repaint)
+                return;
+
+            foreach (QAToolTelemetryClass.Entry entry in cachedEntries)
+            {
+                if (entry == null)
+                    continue;
+
+                if (entry.type != QAToolJSONTypes.Event.ToString())
+                    continue;
+
+                if (entry.args == null)
+                    continue;
+
+                if (!entry.args.TryGetValue("event", out object evt))
+                    continue;
+
+                if (evt == null)
+                    continue;
+
+                Vector3 pos = entry.PlayerPosition.ToVector3();
+
+                float size = HandleUtility.GetHandleSize(pos) * 0.25f;
+
+                Handles.DrawWireCube(pos, Vector3.one * size);
+
+                Handles.SphereHandleCap(
+                    0,
+                    pos,
+                    Quaternion.identity,
+                    size,
+                    EventType.Repaint
+                );
+
+                Handles.Label(pos + Vector3.up * size, evt.ToString());
+            }
+        }
 
         private static void DrawTemporalTrail()
         {

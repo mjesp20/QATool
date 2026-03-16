@@ -122,6 +122,10 @@ namespace QATool
             get => EditorPrefs.GetBool("showFeedbackNotes");
             set => EditorPrefs.SetBool("showFeedbackNotes", value);
         }
+        public static bool showEvents        {
+            get => EditorPrefs.GetBool("showEvents");
+            set => EditorPrefs.SetBool("showEvents", value);
+        }
 
         public static float heatmapCellSize
         {
