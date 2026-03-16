@@ -40,14 +40,13 @@ namespace QATool.Sample
             if (accumulatedDamage >= debugThreshold)
             {
                 Debug.Log($"Player lost {accumulatedDamage} health | Current: {currentHealth}");
-                QAToolGlobals.SetFlagValue("Meaningful Damage Taken", accumulatedDamage);
+                QAToolGlobals.Event(new System.Collections.Generic.Dictionary<string, object> { { "event", "-10 HP" } });
                 accumulatedDamage = 0f; // reset counter
             }
 
             // Optional: if you want to also handle leftover damage less than threshold on death
             if (currentHealth <= 0f && accumulatedDamage > 0f)
             {
-                Debug.Log($"Player lost remaining {accumulatedDamage} health before death");
                 accumulatedDamage = 0f;
             }
 
