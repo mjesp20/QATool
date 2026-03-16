@@ -39,9 +39,17 @@ namespace QATool.Sample
 
             if (accumulatedDamage >= debugThreshold)
             {
+                // Log the total accumulated damage
                 Debug.Log($"Player lost {accumulatedDamage} health | Current: {currentHealth}");
-                QAToolGlobals.Event(new System.Collections.Generic.Dictionary<string, object> { { "event", "-10 HP" } });
-                accumulatedDamage = 0f; // reset counter
+
+                // Send the actual accumulated damage as an event
+                QAToolGlobals.Event(
+                    new System.Collections.Generic.Dictionary<string, object>
+                    {
+                        { "event", $"{accumulatedDamage} HP" } // shows the true damage value
+                    });
+
+                accumulatedDamage = 0f; // reset counter for next batch
             }
 
             // Optional: if you want to also handle leftover damage less than threshold on death
