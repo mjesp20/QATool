@@ -31,13 +31,13 @@ namespace QATool
             {
                 if (Event.current.keyCode == KeyCode.DownArrow)
                 {
-                    QAToolWindow.SelectFile(Mathf.Min(QAToolWindow.currentFileIndex + 1, fileNames.Count - 1));
+                    QAToolWindow.SelectFile(Mathf.Min(QAToolWindow.activeFileIndex + 1, fileNames.Count - 1));
                     ScrollToSelected();
                     Event.current.Use();
                 }
                 else if (Event.current.keyCode == KeyCode.UpArrow)
                 {
-                    QAToolWindow.SelectFile(Mathf.Max(QAToolWindow.currentFileIndex - 1, 0));
+                    QAToolWindow.SelectFile(Mathf.Max(QAToolWindow.activeFileIndex - 1, 0));
                     ScrollToSelected();
                     Event.current.Use();
                 }
@@ -54,7 +54,7 @@ namespace QATool
 
             for (int i = 0; i < fileNames.Count; i++)
             {
-                bool isSelected = QAToolWindow.currentFileIndex == i;
+                bool isSelected = QAToolWindow.activeFileIndex == i;
 
                 GUIStyle style = new GUIStyle(EditorStyles.label);
                 style.padding = new RectOffset(8, 8, 4, 4);
@@ -100,7 +100,7 @@ namespace QATool
         private void ScrollToSelected()
         {
             float rowHeight = EditorGUIUtility.singleLineHeight + 8;
-            float selectedY = QAToolWindow.currentFileIndex * rowHeight;
+            float selectedY = QAToolWindow.activeFileIndex * rowHeight;
             float windowHeight = position.height - EditorGUIUtility.singleLineHeight;
 
             if (selectedY < scrollPosition.y)
