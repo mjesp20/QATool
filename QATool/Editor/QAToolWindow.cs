@@ -9,16 +9,15 @@ namespace QATool
 {
     public class QAToolWindow : EditorWindow
     {
-        private static List<List<Vector3>> allTrails = new List<List<Vector3>>();
-        private string filterCriteria = "";
         private Rect popupButtonRect;
 
         private static List<Vector3> temporalTrail = new List<Vector3>();
         private static int currentPointIndex = 0;
 
-        private static List<List<QAToolTelemetryClass.Entry>> allFiles = new List<List<QAToolTelemetryClass.Entry>>();
         public static int currentFileIndex = 0;
         private static bool isPreview = true;
+
+        
 
         void OnEnable()
         {
@@ -29,7 +28,6 @@ namespace QATool
         void OnDisable()
         {
             SceneView.duringSceneGui -= OnSceneGUI;
-            // EditorPrefs saves automatically — no AssetDatabase.SaveAssets() needed
         }
 
         [MenuItem("Window/QA Tool")]
@@ -52,8 +50,8 @@ namespace QATool
             if (Event.current.type == EventType.Repaint)
                 popupButtonRect = GUILayoutUtility.GetLastRect();
 
-            if (GUILayout.Button("Reload Player Path Data"))
-                DrawPlayerTrails();
+            if (GUILayout.Button("Reload Data"))
+                UpdateScene();
 
             EditorGUI.BeginChangeCheck();
             QAToolGlobals.showGhostTrails    = EditorGUILayout.Toggle("Show Ghost Trails",    QAToolGlobals.showGhostTrails);
@@ -85,35 +83,66 @@ namespace QATool
 
             DrawTemporalTrail();
         }
+        private static List<List<Vector3>> PositionsByFile = new List<List<Vector3>>();
+        private static List<QAToolTelemetryClass.Entry> cachedEntries = new List<QAToolTelemetryClass.Entry>();
 
         public void UpdateScene()
         {
+            List<List<QAToolTelemetryClass.Entry>> data = QAToolTelemetryLoader.LoadFromFolder();
+
             QAToolSceneValidator.ForceValidate();
+
+            cachedEntries = DataToUnsortedList(data);
+
+            PositionsByFile = data
+                .Select(entryList => entryList
+                    .Select(entry => entry.PlayerPosition.ToVector3())
+                    .ToList())
+                .ToList();
+
             DrawPlayerTrails();
             SceneView.RepaintAll();
         }
 
-        public static void DrawFeedbackNotes()
+        List<QAToolTelemetryClass.Entry> DataToUnsortedList(List<List<QAToolTelemetryClass.Entry>> data)
+        {
+            List<QAToolTelemetryClass.Entry> list = new List<QAToolTelemetryClass.Entry>();
+            foreach (List<QAToolTelemetryClass.Entry> entryList in data)
+            {
+                foreach (QAToolTelemetryClass.Entry entry in entryList)
+                {
+                    list.Add(entry);
+                }
+            }
+            return list;
+        }
+
+        public static void DrawFeedbackNotes(List<QAToolTelemetryClass.Entry> list)
         {
             if (!QAToolGlobals.showFeedbackNotes) return;
 
-            List<QAToolTelemetryClass.Entry> notes = QAToolTelemetryLoader.GetAllEntries(QAToolJSONTypes.FeedbackNote);
-            foreach (QAToolTelemetryClass.Entry note in notes)
-                Handles.Label(note.PlayerPosition.ToVector3(), note.args["note"].ToString());
+            foreach (QAToolTelemetryClass.Entry entry in list)
+            {
+                if (entry.args.ContainsKey("note"))
+                {
+                    Handles.Label(entry.PlayerPosition.ToVector3(), entry.args["note"].ToString());
+                }
+            }   
         }
 
         static void OnSceneGUI(SceneView sceneView)
         {
-            if (allTrails.Count > 0)
+            // Ghost trails
+            if (QAToolGlobals.showGhostTrails && PositionsByFile.Count > 0)
             {
                 Color[] trailColors =
                 {
-                    Color.red, Color.cyan, Color.green, Color.yellow, Color.magenta
-                };
+            Color.red, Color.cyan, Color.green, Color.yellow, Color.magenta
+        };
 
-                for (int t = 0; t < allTrails.Count; t++)
+                for (int t = 0; t < PositionsByFile.Count; t++)
                 {
-                    var trail = allTrails[t];
+                    var trail = PositionsByFile[t];
                     if (trail == null || trail.Count == 0) continue;
 
                     Handles.color = trailColors[t % trailColors.Length];
@@ -122,36 +151,24 @@ namespace QATool
                 }
             }
 
+            // Feedback notes — must be called from here, not UpdateScene()
+            if (QAToolGlobals.showFeedbackNotes && cachedEntries != null)
+                DrawFeedbackNotes(cachedEntries);
+
+            // Temporal trail
             if (temporalTrail.Count > 0)
             {
                 Handles.color = Color.white;
 
-                int   drawUpTo   = isPreview ? temporalTrail.Count - 1 : currentPointIndex;
-                float thickness  = isPreview ? 6f : 4f;
+                int drawUpTo = isPreview ? temporalTrail.Count - 1 : currentPointIndex;
+                float thickness = isPreview ? 6f : 4f;
                 Handles.DrawAAPolyLine(thickness, temporalTrail.Take(drawUpTo + 1).ToArray());
                 Handles.DrawSolidDisc(temporalTrail[currentPointIndex], Vector3.up, 0.2f);
             }
-
-            DrawFeedbackNotes();
         }
 
         public static void DrawPlayerTrails()
         {
-            allTrails.Clear();
-
-            if (!QAToolGlobals.showGhostTrails)
-            {
-                SceneView.RepaintAll();
-                return;
-            }
-
-            var entriesByFile = QAToolTelemetryLoader.GetAllPositionsByFile();
-            foreach (var fileEntries in entriesByFile)
-            {
-                var positions = fileEntries.Select(entry => entry.PlayerPosition.ToVector3()).ToList();
-                if (positions.Count > 0)
-                    allTrails.Add(positions);
-            }
             SceneView.RepaintAll();
         }
 
@@ -162,27 +179,27 @@ namespace QATool
 
             if (GUILayout.Button("Load Temporal Trail"))
             {
-                LoadAllFiles();
+                currentFileIndex = 0;
                 LoadFileAtIndex(0);
             }
 
             if (GUILayout.Button("Unload Temporal Trail"))
             {
                 temporalTrail.Clear();
-                allFiles.Clear();
+                //PositionsByFile.Clear();
                 currentFileIndex  = 0;
                 currentPointIndex = 0;
                 isPreview         = true;
                 SceneView.RepaintAll();
             }
 
-            if (allFiles.Count == 0) return;
+            if (PositionsByFile.Count == 0) return;
 
             if (GUILayout.Button("Browse Files"))
                 QAToolTemporalFileWindow.ShowWindow();
 
             GUILayout.Space(4);
-            GUILayout.Label($"Player File: {currentFileIndex + 1} / {allFiles.Count}");
+            GUILayout.Label($"Player File: {currentFileIndex + 1} / {PositionsByFile.Count}");
 
             EditorGUILayout.BeginHorizontal();
             EditorGUI.BeginDisabledGroup(currentFileIndex <= 0);
@@ -193,7 +210,7 @@ namespace QATool
             }
             EditorGUI.EndDisabledGroup();
 
-            EditorGUI.BeginDisabledGroup(currentFileIndex >= allFiles.Count - 1);
+            EditorGUI.BeginDisabledGroup(currentFileIndex >= PositionsByFile.Count - 1);
             if (GUILayout.Button("Next File ▶"))
             {
                 currentFileIndex++;
@@ -219,17 +236,11 @@ namespace QATool
             }
         }
 
-        private static void LoadAllFiles()
-        {
-            allFiles         = QAToolTelemetryLoader.GetAllPositionsByFile().ToList();
-            currentFileIndex = 0;
-        }
-
         private static void LoadFileAtIndex(int index)
         {
-            if (allFiles.Count == 0 || index < 0 || index >= allFiles.Count) return;
+            if (PositionsByFile.Count == 0 || index < 0 || index >= PositionsByFile.Count) return;
 
-            temporalTrail     = allFiles[index].Select(e => e.PlayerPosition.ToVector3()).ToList();
+            temporalTrail = PositionsByFile[index];
             currentPointIndex = 0;
             isPreview         = true;
             SceneView.RepaintAll();
