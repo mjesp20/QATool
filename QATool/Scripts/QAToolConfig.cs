@@ -100,7 +100,7 @@ namespace QATool
             string path = Path.Combine(Application.streamingAssetsPath, StreamingAssetsRelativePath);
             if (!File.Exists(path))
             {
-                Debug.LogWarning("[QATool] config.json not found in StreamingAssets. Using default values.");
+                Debug.LogWarning("[QATool] config.json not found in StreamingAssets. Using default values."); //this wont be visible most likely
                 _data = new QAToolConfigData();
                 return;
             }

@@ -70,7 +70,7 @@ namespace QATool
         {
             foreach (KeyValuePair<string, object> arg in entry.args)
             {
-                if (arg.Key == "note" || arg.Key == "event")
+                if (arg.Key == "note" || arg.Key == "event" || arg.Key == "prompt")
                 {
                     continue;
                 }

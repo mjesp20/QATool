@@ -28,6 +28,7 @@ namespace QATool
         // ──────────────────────────────────────────────
 
         private Rect popupButtonRect;
+        private int _lastHotControl;
 
         // ──────────────────────────────────────────────
         //  Lifecycle
@@ -58,11 +59,20 @@ namespace QATool
 
             DrawToolbarButtons();
 
+            // Update values on every change, but don't validate yet
             EditorGUI.BeginChangeCheck();
             DrawVisualisationToggles();
             DrawHeatmapControls();
-            if (EditorGUI.EndChangeCheck())
-                ReloadData();
+            EditorGUI.EndChangeCheck(); // <-- drop the if-block here
+
+            // Only validate + repaint when a slider (or any control) is released
+            bool controlJustReleased = _lastHotControl != 0 && GUIUtility.hotControl == 0;
+            if (controlJustReleased)
+            {
+                QAToolSceneValidator.ForceValidate();
+                RepaintScene();
+            }
+            _lastHotControl = GUIUtility.hotControl;
 
             GUILayout.Space(10);
             DrawTemporalTrailSection();
@@ -215,6 +225,8 @@ namespace QATool
                     Handles.Label(entry.PlayerPosition.ToVector3(), note.ToString());
             }
         }
+
+
 
         private static void DrawTemporalTrail()
         {

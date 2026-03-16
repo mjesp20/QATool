@@ -48,18 +48,36 @@ namespace QATool
             get
             {
                 var types = flagTypes;
-                if (types == null || types.Count == 0) return null;
+                if (types == null || types.Count == 0)
+                    return new Dictionary<string, object>(); // Never hand null to callers
 
                 var dict = new Dictionary<string, object>();
                 foreach (var kvp in types)
                     dict[kvp.Key] = _flagValues.GetValueOrDefault(kvp.Key);
-
                 return dict;
             }
         }
 
         public static object GetFlagValue(string key)              => _flagValues.GetValueOrDefault(key);
-        public static void   SetFlagValue(string key, object value) => _flagValues[key] = value;
+        public static void SetFlagValue(string key, object value)
+        {
+            // Auto-register the flag type if it hasn't been defined yet
+            if (value != null && !flagTypes.ContainsKey(key))
+            {
+                var inferredType = value.GetType(); //issue: Floats that are whole numbers (i.e 1 2 etc) will be defined as ints
+
+#if UNITY_EDITOR
+                // Persist the new flag definition so it survives domain reloads
+                var updatedTypes = flagTypes ?? new Dictionary<string, Type>();
+                updatedTypes[key] = inferredType;
+                flagTypes = updatedTypes;
+                Debug.LogWarning($"[QATool] Flag '{key}' was not defined. Auto-registered as '{inferredType.Name}'. " +
+                                 $"Consider adding it explicitly in the QA Tool config.");
+#endif
+            }
+
+            _flagValues[key] = value;
+        }
 
         public static void Event(Dictionary<string, object> dict) =>
             QAToolPlayerTracker.Instance.QAToolEvent(dict);
