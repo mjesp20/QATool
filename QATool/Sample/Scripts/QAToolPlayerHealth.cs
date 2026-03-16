@@ -14,6 +14,7 @@ namespace QATool.Sample
         void Start()
         {
             currentHealth = maxHealth;
+            QAToolGlobals.SetFlagValue("Health", currentHealth);
         }
 
         public void Heal(float amount)
