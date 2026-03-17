@@ -98,17 +98,17 @@ public class QAToolPlayerTracker : MonoBehaviour
         var entry = new Dictionary<string, object>
         {
             { "PlayerPosition", new {
-                x = transform.position.x.ToString("F4"),
-                y = transform.position.y.ToString("F4"),
-                z = transform.position.z.ToString("F4") }},
+                x = transform.position.x,
+                y = transform.position.y,
+                z = transform.position.z }},
             { "PlayerVelocity", new {
-                x = rigidBody.linearVelocity.x.ToString("F4"),
-                y = rigidBody.linearVelocity.y.ToString("F4"),
-                z = rigidBody.linearVelocity.z.ToString("F4") }},
+                x = rigidBody.linearVelocity.x,
+                y = rigidBody.linearVelocity.y,
+                z = rigidBody.linearVelocity.z }},
             { "PlayerCamera", new {
-                x = Camera.main.transform.rotation.x.ToString("F4"),
-                y = Camera.main.transform.rotation.y.ToString("F4"),
-                z = Camera.main.transform.rotation.z.ToString("F4") }},
+                x = Camera.main.transform.rotation.x,
+                y = Camera.main.transform.rotation.y,
+                z = Camera.main.transform.rotation.z }},
             { "type", type.ToString() },
             { "time", playSessionDuration },
             { "playerID", 1 },
