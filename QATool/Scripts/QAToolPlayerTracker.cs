@@ -1,15 +1,16 @@
 using Newtonsoft.Json;
+using QATool;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using TMPro;
+using Unity.VisualScripting;
+using Unity.VisualScripting.YamlDotNet.Core.Tokens;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using QATool;
-using Unity.VisualScripting;
-using System.Linq;
 
 
 
@@ -113,8 +114,12 @@ public class QAToolPlayerTracker : MonoBehaviour
             { "playerID", 1 },
             { "args", args ?? new Dictionary<string, object>() }
         };
+        JsonSerializerSettings settings = new JsonSerializerSettings
+        {
+            Culture = System.Globalization.CultureInfo.InvariantCulture
+        };
 
-        string jsonLine = JsonConvert.SerializeObject(entry);
+        string jsonLine = JsonConvert.SerializeObject(entry,settings);
         File.AppendAllText(filePath, jsonLine + Environment.NewLine);
     }
 
