@@ -97,15 +97,15 @@ public class QAToolPlayerTracker : MonoBehaviour
     {
         var entry = new Dictionary<string, object>
         {
-            { "PlayerPosition", new {
+            { "position", new {
                 x = transform.position.x,
                 y = transform.position.y,
                 z = transform.position.z }},
-            { "PlayerVelocity", new {
+            { "velocity", new {
                 x = rigidBody.linearVelocity.x,
                 y = rigidBody.linearVelocity.y,
                 z = rigidBody.linearVelocity.z }},
-            { "PlayerCamera", new {
+            { "camera", new {
                 x = Camera.main.transform.rotation.x,
                 y = Camera.main.transform.rotation.y,
                 z = Camera.main.transform.rotation.z }},

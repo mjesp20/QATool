@@ -224,7 +224,7 @@ namespace QATool
             foreach (QAToolTelemetryClass.Entry entry in cachedEntries)
             {
                 if (entry.args.TryGetValue("note", out object note))
-                    Handles.Label(entry.PlayerPosition.ToVector3(), note.ToString());
+                    Handles.Label(entry.position.ToVector3(), note.ToString());
             }
         }
 
@@ -254,7 +254,7 @@ namespace QATool
                 if (evt == null)
                     continue;
 
-                Vector3 pos = entry.PlayerPosition.ToVector3();
+                Vector3 pos = entry.position.ToVector3();
 
                 float size = HandleUtility.GetHandleSize(pos) * 0.25f;
 
@@ -296,7 +296,7 @@ namespace QATool
 
             cachedEntries = FlattenEntries(data);
 
-            trailsByFile = data.Select(file => file.Where(e => e.type == "Movement").Select(e => e.PlayerPosition.ToVector3()).ToList()).ToList();
+            trailsByFile = data.Select(file => file.Where(e => e.type == "Movement").Select(e => e.position.ToVector3()).ToList()).ToList();
 
             RepaintScene();
         }

@@ -68,7 +68,7 @@ namespace QATool
 
             heatmap.Clear();
 
-            List<Vector3> positions = QAToolTelemetryLoader.GetAllEntries().Select(entry => entry.PlayerPosition.ToVector3()).ToList();
+            List<Vector3> positions = QAToolTelemetryLoader.GetAllEntries().Select(entry => entry.position.ToVector3()).ToList();
 
 
             //Debug.Log($"{positions.Count} positions");

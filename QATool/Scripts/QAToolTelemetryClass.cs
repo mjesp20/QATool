@@ -47,9 +47,9 @@ namespace QATool
         [Serializable]
         public class Entry
         {
-            public PlayerPosition PlayerPosition;
-            public PlayerVelocity PlayerVelocity;
-            public PlayerCamera PlayerCamera;
+            public PlayerPosition position;
+            public PlayerVelocity velocity;
+            public PlayerCamera camera;
             public string type;
             public float time;
             public int playerID;
