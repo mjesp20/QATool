@@ -62,6 +62,7 @@ namespace QATool
 
         void LoadHeatmap()
         {
+            if (!QAToolGlobals.showHeatMap) { return; }
             if (heatmap == null)
                 heatmap = new Dictionary<Vector3Int, int>();
 

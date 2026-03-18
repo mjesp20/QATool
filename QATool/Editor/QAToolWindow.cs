@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -9,66 +7,108 @@ namespace QATool
 {
     public class QAToolWindow : EditorWindow
     {
-        private static List<List<Vector3>> allTrails = new List<List<Vector3>>();
-        private string filterCriteria = "";
-        private Rect popupButtonRect;
+        // ──────────────────────────────────────────────
+        //  Scene data
+        // ──────────────────────────────────────────────
+
+        private static List<List<Vector3>> trailsByFile = new List<List<Vector3>>();
+        private static List<QAToolTelemetryClass.Entry> cachedEntries = new List<QAToolTelemetryClass.Entry>();
+
+        // ──────────────────────────────────────────────
+        //  Temporal-trail state
+        // ──────────────────────────────────────────────
 
         private static List<Vector3> temporalTrail = new List<Vector3>();
-        private static int currentPointIndex = 0;
-
-        private static List<List<QAToolTelemetryClass.Entry>> allFiles = new List<List<QAToolTelemetryClass.Entry>>();
-        public static int currentFileIndex = 0;
+        public static int activeFileIndex = 0;
+        private static int scrubIndex = 0;
         private static bool isPreview = true;
+
+        // ──────────────────────────────────────────────
+        //  Misc editor state
+        // ──────────────────────────────────────────────
+
+        private Rect popupButtonRect;
+        private int _lastHotControl;
+
+        // ──────────────────────────────────────────────
+        //  Lifecycle
+        // ──────────────────────────────────────────────
+
+        [MenuItem("Window/QA Tool")]
+        public static void ShowWindow() => GetWindow<QAToolWindow>("QA Tool");
 
         void OnEnable()
         {
             SceneView.duringSceneGui += OnSceneGUI;
-            DrawPlayerTrails();
+            RepaintScene();
         }
 
         void OnDisable()
         {
             SceneView.duringSceneGui -= OnSceneGUI;
-            AssetDatabase.SaveAssets();
         }
 
-        [MenuItem("Window/QA Tool")]
-        public static void ShowWindow()
-        {
-            GetWindow<QAToolWindow>("QA Tool");
-        }
+        // ──────────────────────────────────────────────
+        //  GUI entry point
+        // ──────────────────────────────────────────────
 
         void OnGUI()
         {
             GUILayout.Space(10);
             GUILayout.Label("QA Tool", EditorStyles.boldLabel);
 
+            DrawToolbarButtons();
+
+            // Update values on every change, but don't validate yet
+            EditorGUI.BeginChangeCheck();
+            DrawVisualisationToggles();
+            DrawHeatmapControls();
+            EditorGUI.EndChangeCheck(); // <-- drop the if-block here
+
+            // Only validate + repaint when a slider (or any control) is released
+            bool controlJustReleased = _lastHotControl != 0 && GUIUtility.hotControl == 0;
+            if (controlJustReleased)
+            {
+                QAToolSceneValidator.ForceValidate();
+                RepaintScene();
+            }
+            _lastHotControl = GUIUtility.hotControl;
+
+            GUILayout.Space(10);
+            DrawTemporalTrailSection();
+        }
+
+        // ──────────────────────────────────────────────
+        //  OnGUI sections
+        // ──────────────────────────────────────────────
+
+        private void DrawToolbarButtons()
+        {
             if (GUILayout.Button("Filters"))
                 QAToolFilterWindow.ShowWindow();
 
             if (GUILayout.Button("Flags"))
                 QAToolFlagWindow.ShowWindow();
 
-
             if (Event.current.type == EventType.Repaint)
                 popupButtonRect = GUILayoutUtility.GetLastRect();
 
-            if (GUILayout.Button("Reload Player Path Data"))
-                DrawPlayerTrails();
+            if (GUILayout.Button("Reload Data"))
+                ReloadData();
+        }
 
-            EditorGUI.BeginChangeCheck();
+        private void DrawVisualisationToggles()
+        {
             QAToolGlobals.showGhostTrails = EditorGUILayout.Toggle("Show Ghost Trails", QAToolGlobals.showGhostTrails);
             QAToolGlobals.showHeatMap = EditorGUILayout.Toggle("Show Heat Map", QAToolGlobals.showHeatMap);
             QAToolGlobals.showFeedbackNotes = EditorGUILayout.Toggle("Show Feedback Notes", QAToolGlobals.showFeedbackNotes);
-
+            QAToolGlobals.showEvents = EditorGUILayout.Toggle("Show Events", QAToolGlobals.showEvents);
             QAToolGlobals.feedbackKeyCode = EditorGUILayout.TextArea(QAToolGlobals.feedbackKeyCode);
-
-
-            //---------------Enable/Disable-----------------------------
-            //---------------Float field Øverst-------------------------
-            //---------------Slider Nederst-----------------------------
             QAToolGlobals.dataPointsPerSecond = EditorGUILayout.FloatField("Data Points Per Second", QAToolGlobals.dataPointsPerSecond);
-            //QAToolGlobals.dataPointsPerSecond  = EditorGUILayout.Slider("Data Points logged Per Second", QAToolGlobals.dataPointsPerSecond, 0.1f, 20
+        }
+
+        private void DrawHeatmapControls()
+        {
             QAToolGlobals.heatmapCellSize = EditorGUILayout.Slider("Cell Size", QAToolGlobals.heatmapCellSize, 0.2f, 5f);
             QAToolGlobals.heatmapOpacity = EditorGUILayout.Slider("Opacity", QAToolGlobals.heatmapOpacity, 0f, 1f);
             QAToolGlobals.heatmapContrast = EditorGUILayout.Slider("Contrast", QAToolGlobals.heatmapContrast, 0f, 3f);
@@ -77,222 +117,222 @@ namespace QATool
             float min = QAToolGlobals.heatmapMinPercentile;
             float max = QAToolGlobals.heatmapMaxPercentile;
 
-            EditorGUILayout.MinMaxSlider(
-                ref min,
-                ref max,
-                0f,
-                1f
-            );
-
+            EditorGUILayout.MinMaxSlider(ref min, ref max, 0f, 1f);
             EditorGUILayout.BeginHorizontal();
             min = EditorGUILayout.FloatField(min, GUILayout.MaxWidth(50));
             max = EditorGUILayout.FloatField(max, GUILayout.MaxWidth(50));
             EditorGUILayout.EndHorizontal();
+
             QAToolGlobals.heatmapMinPercentile = Mathf.Clamp01(min);
             QAToolGlobals.heatmapMaxPercentile = Mathf.Clamp01(max);
-
-            if (EditorGUI.EndChangeCheck())
-            {
-                UpdateScene();
-            }
-
-            DrawTemporalTrail();
-
-
-        }
-        public void UpdateScene()
-        {
-            QAToolSceneValidator.ForceValidate();
-            DrawPlayerTrails();
-            SceneView.RepaintAll();
-
-
         }
 
-        public static void DrawFeedbackNotes()
+        private void DrawTemporalTrailSection()
         {
-            if (!QAToolGlobals.showFeedbackNotes) return;
-
-            List<QAToolTelemetryClass.Entry> notes = QAToolTelemetryLoader.GetAllEntries(QAToolJSONTypes.FeedbackNote);
-            foreach (QAToolTelemetryClass.Entry note in notes)
-            {
-                Handles.Label(note.PlayerPosition.ToVector3(), note.args["note"].ToString());
-            }
-        }
-
-        static bool trailsDirty = true;
-
-        static void OnSceneGUI(SceneView sceneView)
-        {
-            if (allTrails.Count > 0)
-            {
-                Color[] trailColors =
-                {
-                Color.red, Color.cyan, Color.green, Color.yellow, Color.magenta
-            };
-
-                for (int t = 0; t < allTrails.Count; t++)
-                {
-                    var trail = allTrails[t];
-                    if (trail == null || trail.Count == 0) continue;
-
-                    Handles.color = trailColors[t % trailColors.Length];
-
-                    for (int i = 0; i < trail.Count - 1; i++)
-
-                        Handles.DrawLine(trail[i], trail[i + 1]);
-                }
-            }
-
-            if (temporalTrail.Count > 0)
-            {
-                Handles.color = Color.white;
-
-                int drawUpTo = isPreview ? temporalTrail.Count - 1 : currentPointIndex;
-
-                float thickness = isPreview ? 6f : 4f; //Hurtig Hardcode
-                Handles.DrawAAPolyLine(thickness, temporalTrail.Take(drawUpTo + 1).ToArray());
-
-                Handles.DrawSolidDisc(temporalTrail[currentPointIndex], Vector3.up, 0.2f);
-            }
-
-            DrawFeedbackNotes();
-        }
-
-        public static void DrawPlayerTrails()
-        {
-            allTrails.Clear();
-
-            if (!QAToolGlobals.showGhostTrails)
-            {
-                SceneView.RepaintAll();
-                return;
-            }
-
-            var entriesByFile = QAToolTelemetryLoader.GetAllPositionsByFile();
-            foreach (var fileEntries in entriesByFile)
-            {
-                var positions = fileEntries.Select(entry => entry.PlayerPosition.ToVector3()).ToList();
-                if (positions.Count > 0)
-                    allTrails.Add(positions);
-            }
-
-            trailsDirty = false;
-            SceneView.RepaintAll();
-        }
-
-        private void DrawTemporalTrail()
-        {
-
-
-            GUILayout.Space(10);
             GUILayout.Label("Temporal Trail", EditorStyles.boldLabel);
 
+            DrawTemporalTrailLoadButtons();
+
+            if (trailsByFile.Count == 0) return;
+
+            DrawFilePicker();
+
+            if (temporalTrail.Count == 0) return;
+
+            DrawScrubber();
+        }
+
+        private void DrawTemporalTrailLoadButtons()
+        {
             if (GUILayout.Button("Load Temporal Trail"))
-            {
-                LoadAllFiles();
                 LoadFileAtIndex(0);
-            }
-            
+
             if (GUILayout.Button("Unload Temporal Trail"))
-            {
-                temporalTrail.Clear();
-                allFiles.Clear();
-                currentFileIndex = 0;
-                currentPointIndex = 0;
-                isPreview = true;
-                SceneView.RepaintAll();
-            }
+                UnloadTemporalTrail();
+        }
 
-
-            if (allFiles.Count == 0) return;
-
+        private void DrawFilePicker()
+        {
             if (GUILayout.Button("Browse Files"))
                 QAToolTemporalFileWindow.ShowWindow();
 
             GUILayout.Space(4);
-            GUILayout.Label($"Player File: {currentFileIndex + 1} / {allFiles.Count}");
+            GUILayout.Label($"Player File: {activeFileIndex + 1} / {trailsByFile.Count}");
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUI.BeginDisabledGroup(currentFileIndex <= 0);
+
+            EditorGUI.BeginDisabledGroup(activeFileIndex <= 0);
             if (GUILayout.Button("◀ Prev File"))
-            {
-                currentFileIndex--;
-                LoadFileAtIndex(currentFileIndex);
-            }
+                LoadFileAtIndex(activeFileIndex - 1);
             EditorGUI.EndDisabledGroup();
 
-            EditorGUI.BeginDisabledGroup(currentFileIndex >= allFiles.Count - 1);
+            EditorGUI.BeginDisabledGroup(activeFileIndex >= trailsByFile.Count - 1);
             if (GUILayout.Button("Next File ▶"))
-            {
-                currentFileIndex++;
-                LoadFileAtIndex(currentFileIndex);
-            }
+                LoadFileAtIndex(activeFileIndex + 1);
             EditorGUI.EndDisabledGroup();
-            EditorGUILayout.EndHorizontal();
 
+            EditorGUILayout.EndHorizontal();
+        }
+
+        private void DrawScrubber()
+        {
+            GUILayout.Space(4);
+            GUILayout.Label($"Point: {scrubIndex} / {temporalTrail.Count - 1}");
+
+            int newIndex = (int)EditorGUILayout.Slider("Scrub", scrubIndex, 0, temporalTrail.Count - 1);
+            if (newIndex != scrubIndex)
+            {
+                scrubIndex = newIndex;
+                isPreview = false;
+                RepaintScene();
+            }
+        }
+
+        // ──────────────────────────────────────────────
+        //  Scene-view rendering
+        // ──────────────────────────────────────────────
+
+        static void OnSceneGUI(SceneView sceneView)
+        {
+            DrawGhostTrails();
+            DrawFeedbackNotes();
+            DrawEvents();
+            DrawTemporalTrail();
+        }
+
+        private static void DrawGhostTrails()
+        {
+            if (!QAToolGlobals.showGhostTrails || trailsByFile.Count == 0) return;
+
+            Color[] palette = { Color.red, Color.cyan, Color.green, Color.yellow, Color.magenta };
+
+            for (int i = 0; i < trailsByFile.Count; i++)
+            {
+                List<Vector3> trail = trailsByFile[i];
+                if (trail == null || trail.Count == 0) continue;
+
+                Handles.color = palette[i % palette.Length];
+                for (int p = 0; p < trail.Count - 1; p++)
+                    Handles.DrawLine(trail[p], trail[p + 1]);
+            }
+        }
+
+        private static void DrawFeedbackNotes()
+        {
+            if (!QAToolGlobals.showFeedbackNotes || cachedEntries == null) return;
+
+            foreach (QAToolTelemetryClass.Entry entry in cachedEntries)
+            {
+                if (entry.args.TryGetValue("note", out object note))
+                    Handles.Label(entry.PlayerPosition.ToVector3(), note.ToString());
+            }
+        }
+
+
+        private static void DrawEvents()
+        {
+            if (!QAToolGlobals.showEvents || cachedEntries == null)
+                return;
+
+            if (Event.current.type != EventType.Repaint)
+                return;
+
+            foreach (QAToolTelemetryClass.Entry entry in cachedEntries)
+            {
+                if (entry == null)
+                    continue;
+
+                if (entry.type != QAToolJSONTypes.Event.ToString())
+                    continue;
+
+                if (entry.args == null)
+                    continue;
+
+                if (!entry.args.TryGetValue("event", out object evt))
+                    continue;
+
+                if (evt == null)
+                    continue;
+
+                Vector3 pos = entry.PlayerPosition.ToVector3();
+
+                float size = HandleUtility.GetHandleSize(pos) * 0.25f;
+
+                Handles.DrawWireCube(pos, Vector3.one * size);
+
+                Handles.SphereHandleCap(
+                    0,
+                    pos,
+                    Quaternion.identity,
+                    size,
+                    EventType.Repaint
+                );
+
+                Handles.Label(pos + Vector3.up * size, evt.ToString());
+            }
+        }
+
+        private static void DrawTemporalTrail()
+        {
             if (temporalTrail.Count == 0) return;
 
-            GUILayout.Space(4);
-            GUILayout.Label($"Point: {currentPointIndex} / {temporalTrail.Count - 1}");
+            int drawUpTo = isPreview ? temporalTrail.Count - 1 : scrubIndex;
+            float thickness = isPreview ? 6f : 4f;
 
-
-            EditorGUILayout.BeginHorizontal();
-            /*
-            EditorGUI.BeginDisabledGroup(currentPointIndex <= 0);
-            if (GUILayout.Button("◀ Prev"))
-            {
-                currentPointIndex--;
-                isPreview = false;
-                SceneView.RepaintAll();
-            }
-            EditorGUI.EndDisabledGroup();
-
-            EditorGUI.BeginDisabledGroup(currentPointIndex >= temporalTrail.Count - 1);
-            if (GUILayout.Button("Next ▶"))
-            {
-                currentPointIndex++;
-                isPreview = false;
-                SceneView.RepaintAll();
-            }
-
-            EditorGUI.EndDisabledGroup();
-            */
-            EditorGUILayout.EndHorizontal();
-
-            int newIndex = (int)EditorGUILayout.Slider("Scrub", currentPointIndex, 0, temporalTrail.Count - 1);
-            if (newIndex != currentPointIndex)
-            {
-                currentPointIndex = newIndex;
-                isPreview = false;
-                SceneView.RepaintAll();
-            }
+            Handles.color = Color.white;
+            Handles.DrawAAPolyLine(thickness, temporalTrail.Take(drawUpTo + 1).ToArray());
+            Handles.DrawSolidDisc(temporalTrail[scrubIndex], Vector3.up, 0.2f);
         }
 
-        private static void LoadAllFiles()
+        // ──────────────────────────────────────────────
+        //  Data loading
+        // ──────────────────────────────────────────────
+
+        public void ReloadData()
         {
-            allFiles = QAToolTelemetryLoader.GetAllPositionsByFile().ToList();
-            currentFileIndex = 0;
+            List<List<QAToolTelemetryClass.Entry>> data = QAToolTelemetryLoader.LoadFromFolder();
+
+            QAToolSceneValidator.ForceValidate();
+
+            cachedEntries = FlattenEntries(data);
+
+            trailsByFile = data.Select(file => file.Where(e => e.type == "Movement").Select(e => e.PlayerPosition.ToVector3()).ToList()).ToList();
+
+            RepaintScene();
         }
+
+        private static List<QAToolTelemetryClass.Entry> FlattenEntries(List<List<QAToolTelemetryClass.Entry>> data)
+        {
+            return data.SelectMany(file => file).ToList();
+        }
+
+        // ──────────────────────────────────────────────
+        //  Temporal-trail helpers
+        // ──────────────────────────────────────────────
 
         private static void LoadFileAtIndex(int index)
         {
-            if (allFiles.Count == 0 || index < 0 || index >= allFiles.Count) return;
+            if (trailsByFile.Count == 0 || index < 0 || index >= trailsByFile.Count) return;
 
-            temporalTrail = allFiles[index].Select(e => e.PlayerPosition.ToVector3()).ToList();
-            currentPointIndex = 0;
+            activeFileIndex = index;
+            temporalTrail = trailsByFile[index];
+            scrubIndex = 0;
             isPreview = true;
-            SceneView.RepaintAll();
+            RepaintScene();
         }
 
-        public static void SelectFile(int index)
+        private static void UnloadTemporalTrail()
         {
-            currentFileIndex = index;
-            LoadFileAtIndex(index);
+            temporalTrail = new List<Vector3>();
+            activeFileIndex = 0;
+            scrubIndex = 0;
+            isPreview = true;
+            RepaintScene();
         }
 
+        // Called by QAToolTemporalFileWindow
+        public static void SelectFile(int index) => LoadFileAtIndex(index);
 
-
-
+        private static void RepaintScene() => SceneView.RepaintAll();
     }
 }

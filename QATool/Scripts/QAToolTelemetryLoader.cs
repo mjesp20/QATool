@@ -8,8 +8,13 @@
 
 namespace QATool
 {
+
     public static class QAToolTelemetryLoader
     {
+
+
+
+
         static string folderPath = QAToolGlobals.folderPath;
 
 #if UNITY_EDITOR
@@ -49,6 +54,10 @@ namespace QATool
             return parsedLines;
         }
 
+        static JsonSerializerSettings settings = new JsonSerializerSettings
+        {
+            Culture = System.Globalization.CultureInfo.InvariantCulture
+        };
         public static QAToolTelemetryClass.Entry ParseLine(string line)
         {
             if (string.IsNullOrWhiteSpace(line))
@@ -56,7 +65,7 @@ namespace QATool
 
             try
             {
-                QAToolTelemetryClass.Entry entry = JsonConvert.DeserializeObject<QAToolTelemetryClass.Entry>(line);
+                QAToolTelemetryClass.Entry entry = JsonConvert.DeserializeObject<QAToolTelemetryClass.Entry>(line,settings);
                 return FilterEntry(entry);
             }
             catch (Exception e)
@@ -70,7 +79,7 @@ namespace QATool
         {
             foreach (KeyValuePair<string, object> arg in entry.args)
             {
-                if (arg.Key == "note")
+                if (arg.Key == "note" || arg.Key == "event" || arg.Key == "prompt")
                 {
                     continue;
                 }
