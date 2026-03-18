@@ -296,9 +296,7 @@ namespace QATool
 
             cachedEntries = FlattenEntries(data);
 
-            trailsByFile = data
-                .Select(file => file.Select(e => e.PlayerPosition.ToVector3()).ToList())
-                .ToList();
+            trailsByFile = data.Select(file => file.Where(e => e.type == "Movement").Select(e => e.PlayerPosition.ToVector3()).ToList()).ToList();
 
             RepaintScene();
         }
