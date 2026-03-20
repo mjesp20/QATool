@@ -31,6 +31,14 @@ namespace QATool
         private int _lastHotControl;
 
         // ──────────────────────────────────────────────
+        //  Foldout state
+        // ──────────────────────────────────────────────
+
+        private bool _foldWindows       = true;
+        private bool _foldVisualisation = true;
+        private bool _foldTemporalTrail = true;
+
+        // ──────────────────────────────────────────────
         //  Lifecycle
         // ──────────────────────────────────────────────
 
@@ -54,28 +62,93 @@ namespace QATool
 
         void OnGUI()
         {
-            GUILayout.Space(10);
+            // ── Title ──────────────────────────────────
+            GUILayout.Space(8);
             GUILayout.Label("QA Tool", EditorStyles.boldLabel);
+            DrawHorizontalLine();
 
-            DrawToolbarButtons();
+            // ── Reload Data (prominent) ────────────────
+            GUILayout.Space(6);
+            DrawReloadButton();
+            GUILayout.Space(6);
+            DrawHorizontalLine();
 
-            // Update values on every change, but don't validate yet
-            EditorGUI.BeginChangeCheck();
-            DrawVisualisationToggles();
-            DrawHeatmapControls();
-            EditorGUI.EndChangeCheck(); // <-- drop the if-block here
+            // ── Windows / Filters ─────────────────────
+            GUILayout.Space(4);
+            DrawSection("Data Windows", ref _foldWindows, DrawToolbarButtons);
+            DrawHorizontalLine();
 
-            // Only validate + repaint when a slider (or any control) is released
-            bool controlJustReleased = _lastHotControl != 0 && GUIUtility.hotControl == 0;
-            if (controlJustReleased)
+            // ── Visualisation Toggles ─────────────────
+            GUILayout.Space(4);
+            DrawSection("Visualisation", ref _foldVisualisation, () =>
             {
-                QAToolSceneValidator.ForceValidate();
-                RepaintScene();
-            }
-            _lastHotControl = GUIUtility.hotControl;
+                EditorGUI.BeginChangeCheck();
+                DrawVisualisationToggles();
+                DrawHeatmapControls();
+                EditorGUI.EndChangeCheck();
 
-            GUILayout.Space(10);
+                bool controlJustReleased = _lastHotControl != 0 && GUIUtility.hotControl == 0;
+                if (controlJustReleased)
+                {
+                    QAToolSceneValidator.ForceValidate();
+                    RepaintScene();
+                }
+                _lastHotControl = GUIUtility.hotControl;
+            });
+            DrawHorizontalLine();
+
+            // ── Temporal Trail ────────────────────────
+            GUILayout.Space(4);
             DrawTemporalTrailSection();
+        }
+
+        // ──────────────────────────────────────────────
+        //  Layout helpers
+        // ──────────────────────────────────────────────
+
+        /// <summary>Draws a collapsible, titled, boxed section.</summary>
+        private void DrawSection(string title, ref bool foldout, System.Action drawContent)
+        {
+            // Foldout arrow + title as the section header
+            foldout = EditorGUILayout.Foldout(foldout, title, true, EditorStyles.foldoutHeader);
+
+            if (!foldout) return;
+
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            GUILayout.Space(2);
+            drawContent();
+            GUILayout.Space(2);
+            EditorGUILayout.EndVertical();
+        }
+
+        /// <summary>Draws a full-width 1px horizontal divider.</summary>
+        private void DrawHorizontalLine(float topSpacing = 4f, float bottomSpacing = 4f)
+        {
+            GUILayout.Space(topSpacing);
+            Rect r = EditorGUILayout.GetControlRect(false, 1f);
+            EditorGUI.DrawRect(r, new Color(0.35f, 0.35f, 0.35f, 1f));
+            GUILayout.Space(bottomSpacing);
+        }
+
+        /// <summary>Draws the tall, prominent Reload Data button.</summary>
+        private void DrawReloadButton()
+        {
+            GUIStyle reloadStyle = new GUIStyle(GUI.skin.button)
+            {
+                fontSize    = 13,
+                fontStyle   = FontStyle.Bold,
+                fixedHeight = 46f,
+                alignment   = TextAnchor.MiddleCenter,
+            };
+
+            // Tint the button so it stands out
+            Color prevBg = GUI.backgroundColor;
+            GUI.backgroundColor = new Color(0f, 1f, 0.35f, 1f); // green accent
+
+            if (GUILayout.Button("↺  Refresh Data  ↺", reloadStyle))
+                ReloadData();
+
+            GUI.backgroundColor = prevBg;
         }
 
         // ──────────────────────────────────────────────
@@ -84,36 +157,46 @@ namespace QATool
 
         private void DrawToolbarButtons()
         {
+            EditorGUILayout.BeginHorizontal();
+
             if (GUILayout.Button("Filters"))
                 QAToolFilterWindow.ShowWindow();
 
             if (GUILayout.Button("Flags"))
                 QAToolFlagWindow.ShowWindow();
 
+            EditorGUILayout.EndHorizontal();
+
             if (Event.current.type == EventType.Repaint)
                 popupButtonRect = GUILayoutUtility.GetLastRect();
-
-            if (GUILayout.Button("Reload Data"))
-                ReloadData();
         }
 
         private void DrawVisualisationToggles()
         {
-            QAToolGlobals.showGhostTrails = EditorGUILayout.Toggle("Show Ghost Trails", QAToolGlobals.showGhostTrails);
-            QAToolGlobals.showHeatMap = EditorGUILayout.Toggle("Show Heat Map", QAToolGlobals.showHeatMap);
-            QAToolGlobals.showFeedbackNotes = EditorGUILayout.Toggle("Show Feedback Notes", QAToolGlobals.showFeedbackNotes);
-            QAToolGlobals.showEvents = EditorGUILayout.Toggle("Show Events", QAToolGlobals.showEvents);
-            QAToolGlobals.feedbackKeyCode = EditorGUILayout.TextArea(QAToolGlobals.feedbackKeyCode);
-            QAToolGlobals.dataPointsPerSecond = EditorGUILayout.FloatField("Data Points Per Second", QAToolGlobals.dataPointsPerSecond);
+            GUILayout.Label("Toggles", EditorStyles.miniBoldLabel);
+            QAToolGlobals.showGhostTrails    = EditorGUILayout.Toggle("Show Ghost Trails",    QAToolGlobals.showGhostTrails);
+            QAToolGlobals.showHeatMap        = EditorGUILayout.Toggle("Show Heat Map",        QAToolGlobals.showHeatMap);
+            QAToolGlobals.showFeedbackNotes  = EditorGUILayout.Toggle("Show Feedback Notes",  QAToolGlobals.showFeedbackNotes);
+            QAToolGlobals.showEvents         = EditorGUILayout.Toggle("Show Events",          QAToolGlobals.showEvents);
+
+            GUILayout.Space(4);
+            GUILayout.Label("Settings", EditorStyles.miniBoldLabel);
+            QAToolGlobals.feedbackKeyCode      = EditorGUILayout.TextField("Feedback Key",         QAToolGlobals.feedbackKeyCode);
+            QAToolGlobals.dataPointsPerSecond  = EditorGUILayout.FloatField("Data Points / Sec",   QAToolGlobals.dataPointsPerSecond);
         }
 
         private void DrawHeatmapControls()
         {
-            QAToolGlobals.heatmapCellSize = EditorGUILayout.Slider("Cell Size", QAToolGlobals.heatmapCellSize, 0.2f, 5f);
-            QAToolGlobals.heatmapOpacity = EditorGUILayout.Slider("Opacity", QAToolGlobals.heatmapOpacity, 0f, 1f);
-            QAToolGlobals.heatmapContrast = EditorGUILayout.Slider("Contrast", QAToolGlobals.heatmapContrast, 0f, 3f);
+            GUILayout.Space(6);
+            GUILayout.Label("Heatmap", EditorStyles.miniBoldLabel);
 
-            EditorGUILayout.LabelField("Percentile Range");
+            QAToolGlobals.heatmapCellSize  = EditorGUILayout.Slider("Cell Size",  QAToolGlobals.heatmapCellSize,  0.2f, 5f);
+            QAToolGlobals.heatmapOpacity   = EditorGUILayout.Slider("Opacity",    QAToolGlobals.heatmapOpacity,   0f,   1f);
+            QAToolGlobals.heatmapContrast  = EditorGUILayout.Slider("Contrast",   QAToolGlobals.heatmapContrast,  0f,   3f);
+
+            GUILayout.Space(2);
+            GUILayout.Label("Percentile Range", EditorStyles.miniLabel);
+
             float min = QAToolGlobals.heatmapMinPercentile;
             float max = QAToolGlobals.heatmapMaxPercentile;
 
@@ -129,45 +212,54 @@ namespace QATool
 
         private void DrawTemporalTrailSection()
         {
-            GUILayout.Label("Temporal Trail", EditorStyles.boldLabel);
+            DrawSection("Temporal Trail", ref _foldTemporalTrail, () =>
+            {
+                DrawTemporalTrailLoadButtons();
 
-            DrawTemporalTrailLoadButtons();
+                if (trailsByFile.Count == 0) return;
 
-            if (trailsByFile.Count == 0) return;
+                GUILayout.Space(4);
+                DrawFilePicker();
 
-            DrawFilePicker();
+                if (temporalTrail.Count == 0) return;
 
-            if (temporalTrail.Count == 0) return;
-
-            DrawScrubber();
+                GUILayout.Space(4);
+                DrawScrubber();
+            });
         }
 
         private void DrawTemporalTrailLoadButtons()
         {
-            if (GUILayout.Button("Load Temporal Trail"))
+            EditorGUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Load Trail"))
                 LoadFileAtIndex(0);
 
-            if (GUILayout.Button("Unload Temporal Trail"))
+            if (GUILayout.Button("Unload Trail"))
                 UnloadTemporalTrail();
+
+            EditorGUILayout.EndHorizontal();
         }
 
         private void DrawFilePicker()
         {
+            GUILayout.Label("File Browser", EditorStyles.miniBoldLabel);
+
             if (GUILayout.Button("Browse Files"))
                 QAToolTemporalFileWindow.ShowWindow();
 
-            GUILayout.Space(4);
-            GUILayout.Label($"Player File: {activeFileIndex + 1} / {trailsByFile.Count}");
+            GUILayout.Space(2);
+            GUILayout.Label($"Player File: {activeFileIndex + 1} / {trailsByFile.Count}", EditorStyles.miniLabel);
 
             EditorGUILayout.BeginHorizontal();
 
             EditorGUI.BeginDisabledGroup(activeFileIndex <= 0);
-            if (GUILayout.Button("◀ Prev File"))
+            if (GUILayout.Button("◀ Prev"))
                 LoadFileAtIndex(activeFileIndex - 1);
             EditorGUI.EndDisabledGroup();
 
             EditorGUI.BeginDisabledGroup(activeFileIndex >= trailsByFile.Count - 1);
-            if (GUILayout.Button("Next File ▶"))
+            if (GUILayout.Button("Next ▶"))
                 LoadFileAtIndex(activeFileIndex + 1);
             EditorGUI.EndDisabledGroup();
 
@@ -176,14 +268,15 @@ namespace QATool
 
         private void DrawScrubber()
         {
-            GUILayout.Space(4);
-            GUILayout.Label($"Point: {scrubIndex} / {temporalTrail.Count - 1}");
+            GUILayout.Label("Scrubber", EditorStyles.miniBoldLabel);
+            GUILayout.Label($"Point: {scrubIndex} / {temporalTrail.Count - 1}", EditorStyles.miniLabel);
 
-            int newIndex = (int)EditorGUILayout.Slider("Scrub", scrubIndex, 0, temporalTrail.Count - 1);
+            //GUILayout.Label("Scrub", EditorStyles.miniLabel);
+            int newIndex = (int)EditorGUILayout.Slider(scrubIndex, 0, temporalTrail.Count - 1);
             if (newIndex != scrubIndex)
             {
                 scrubIndex = newIndex;
-                isPreview = false;
+                isPreview  = false;
                 RepaintScene();
             }
         }
@@ -228,46 +321,24 @@ namespace QATool
             }
         }
 
-
         private static void DrawEvents()
         {
-            if (!QAToolGlobals.showEvents || cachedEntries == null)
-                return;
-
-            if (Event.current.type != EventType.Repaint)
-                return;
+            if (!QAToolGlobals.showEvents || cachedEntries == null) return;
+            if (Event.current.type != EventType.Repaint) return;
 
             foreach (QAToolTelemetryClass.Entry entry in cachedEntries)
             {
-                if (entry == null)
-                    continue;
+                if (entry == null) continue;
+                if (entry.type != QAToolJSONTypes.Event.ToString()) continue;
+                if (entry.args == null) continue;
+                if (!entry.args.TryGetValue("event", out object evt)) continue;
+                if (evt == null) continue;
 
-                if (entry.type != QAToolJSONTypes.Event.ToString())
-                    continue;
-
-                if (entry.args == null)
-                    continue;
-
-                if (!entry.args.TryGetValue("event", out object evt))
-                    continue;
-
-                if (evt == null)
-                    continue;
-
-                Vector3 pos = entry.position.ToVector3();
-
-                float size = HandleUtility.GetHandleSize(pos) * 0.25f;
+                Vector3 pos  = entry.position.ToVector3();
+                float   size = HandleUtility.GetHandleSize(pos) * 0.25f;
 
                 Handles.DrawWireCube(pos, Vector3.one * size);
-
-                Handles.SphereHandleCap(
-                    0,
-                    pos,
-                    Quaternion.identity,
-                    size,
-                    EventType.Repaint
-                );
-
+                Handles.SphereHandleCap(0, pos, Quaternion.identity, size, EventType.Repaint);
                 Handles.Label(pos + Vector3.up * size, evt.ToString());
             }
         }
@@ -276,8 +347,8 @@ namespace QATool
         {
             if (temporalTrail.Count == 0) return;
 
-            int drawUpTo = isPreview ? temporalTrail.Count - 1 : scrubIndex;
-            float thickness = isPreview ? 6f : 4f;
+            int   drawUpTo   = isPreview ? temporalTrail.Count - 1 : scrubIndex;
+            float thickness  = isPreview ? 6f : 4f;
 
             Handles.color = Color.white;
             Handles.DrawAAPolyLine(thickness, temporalTrail.Take(drawUpTo + 1).ToArray());
@@ -296,7 +367,12 @@ namespace QATool
 
             cachedEntries = FlattenEntries(data);
 
-            trailsByFile = data.Select(file => file.Where(e => e.type == "Movement").Select(e => e.position.ToVector3()).ToList()).ToList();
+            trailsByFile = data
+                .Select(file => file
+                    .Where(e => e.type == "Movement")
+                    .Select(e => e.position.ToVector3())
+                    .ToList())
+                .ToList();
 
             RepaintScene();
         }
@@ -315,18 +391,18 @@ namespace QATool
             if (trailsByFile.Count == 0 || index < 0 || index >= trailsByFile.Count) return;
 
             activeFileIndex = index;
-            temporalTrail = trailsByFile[index];
-            scrubIndex = 0;
-            isPreview = true;
+            temporalTrail   = trailsByFile[index];
+            scrubIndex      = 0;
+            isPreview       = true;
             RepaintScene();
         }
 
         private static void UnloadTemporalTrail()
         {
-            temporalTrail = new List<Vector3>();
+            temporalTrail   = new List<Vector3>();
             activeFileIndex = 0;
-            scrubIndex = 0;
-            isPreview = true;
+            scrubIndex      = 0;
+            isPreview       = true;
             RepaintScene();
         }
 
