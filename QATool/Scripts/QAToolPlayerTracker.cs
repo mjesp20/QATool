@@ -138,7 +138,16 @@ public class QAToolPlayerTracker : MonoBehaviour
             eventSystem.gameObject.AddComponent<StandaloneInputModule>();
         }
 
-        Canvas canvas = FindFirstObjectByType<Canvas>();
+        List<Canvas> canvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None).ToList();
+        Canvas canvas = null;
+        foreach (Canvas cv in canvases)
+        {
+            if (cv.renderMode == RenderMode.ScreenSpaceOverlay)
+            {
+                canvas = cv;
+                break;
+            }   
+        }
         if (canvas == null)
         {
             canvas = new GameObject("Canvas").AddComponent<Canvas>();
