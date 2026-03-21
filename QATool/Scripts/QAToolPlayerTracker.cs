@@ -1,3 +1,4 @@
+using Codice.Client.BaseCommands.CheckIn;
 using Newtonsoft.Json;
 using QATool;
 using System;
@@ -24,7 +25,6 @@ public class QAToolPlayerTracker : MonoBehaviour
     private string filePath;
     private KeyCode keyCode;
     Button submitButton;
-    Rigidbody rigidBody;
     private static QAToolPlayerTracker instance;
     public static QAToolPlayerTracker Instance
     {
@@ -62,10 +62,6 @@ public class QAToolPlayerTracker : MonoBehaviour
         }
         highest++;
         filePath = Path.Combine(QAToolGlobals.folderPath, $"{highest}.jsonl");
-        if (!TryGetComponent<Rigidbody>(out rigidBody))
-        {
-            throw new Exception("Player Must have RigidBody");
-        } 
     }
 
     void Start()
@@ -101,10 +97,6 @@ public class QAToolPlayerTracker : MonoBehaviour
                 x = transform.position.x,
                 y = transform.position.y,
                 z = transform.position.z }},
-            { "velocity", new {
-                x = rigidBody.linearVelocity.x,
-                y = rigidBody.linearVelocity.y,
-                z = rigidBody.linearVelocity.z }},
             { "camera", new {
                 x = Camera.main.transform.rotation.x,
                 y = Camera.main.transform.rotation.y,
@@ -155,7 +147,6 @@ public class QAToolPlayerTracker : MonoBehaviour
             canvas.gameObject.AddComponent<CanvasScaler>();
             canvas.gameObject.AddComponent<GraphicRaycaster>();
         }
-
         // Dark background panel
         feedbackPanel = new GameObject("FeedbackPanel");
         feedbackPanel.transform.SetParent(canvas.transform, false);
