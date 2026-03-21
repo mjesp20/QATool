@@ -145,7 +145,7 @@ namespace QATool
             Color prevBg = GUI.backgroundColor;
             GUI.backgroundColor = new Color(0f, 1f, 0.35f, 1f); // green accent
 
-            if (GUILayout.Button("↺  Refresh Data  ↺", reloadStyle))
+            if (GUILayout.Button("↺  Refresh Data", reloadStyle))
                 ReloadData();
 
             GUI.backgroundColor = prevBg;
