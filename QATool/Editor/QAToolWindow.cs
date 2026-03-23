@@ -12,7 +12,11 @@ namespace QATool
         // ──────────────────────────────────────────────
 
         private static List<List<Vector3>> trailsByFile = new List<List<Vector3>>();
+        private static List<List<QAToolTelemetryClass.Entry>> entriesByFile = new List<List<QAToolTelemetryClass.Entry>>();
         private static List<QAToolTelemetryClass.Entry> cachedEntries = new List<QAToolTelemetryClass.Entry>();
+
+        // Shared palette so trails and events always match
+        private static readonly Color[] playerPalette = { Color.red, Color.cyan, Color.green, Color.yellow, Color.magenta };
 
         // ──────────────────────────────────────────────
         //  Temporal-trail state
@@ -109,7 +113,6 @@ namespace QATool
         /// <summary>Draws a collapsible, titled, boxed section.</summary>
         private void DrawSection(string title, ref bool foldout, System.Action drawContent)
         {
-            // Foldout arrow + title as the section header
             foldout = EditorGUILayout.Foldout(foldout, title, true, EditorStyles.foldoutHeader);
 
             if (!foldout) return;
@@ -141,9 +144,8 @@ namespace QATool
                 alignment   = TextAnchor.MiddleCenter,
             };
 
-            // Tint the button so it stands out
             Color prevBg = GUI.backgroundColor;
-            GUI.backgroundColor = new Color(0f, 1f, 0.35f, 1f); // green accent
+            GUI.backgroundColor = new Color(0f, 1f, 0.35f, 1f);
 
             if (GUILayout.Button("↺  Refresh Data", reloadStyle))
                 ReloadData();
@@ -271,7 +273,6 @@ namespace QATool
             GUILayout.Label("Scrubber", EditorStyles.miniBoldLabel);
             GUILayout.Label($"Point: {scrubIndex} / {temporalTrail.Count - 1}", EditorStyles.miniLabel);
 
-            //GUILayout.Label("Scrub", EditorStyles.miniLabel);
             int newIndex = (int)EditorGUILayout.Slider(scrubIndex, 0, temporalTrail.Count - 1);
             if (newIndex != scrubIndex)
             {
@@ -297,14 +298,12 @@ namespace QATool
         {
             if (!QAToolGlobals.showGhostTrails || trailsByFile.Count == 0) return;
 
-            Color[] palette = { Color.red, Color.cyan, Color.green, Color.yellow, Color.magenta };
-
             for (int i = 0; i < trailsByFile.Count; i++)
             {
                 List<Vector3> trail = trailsByFile[i];
                 if (trail == null || trail.Count == 0) continue;
 
-                Handles.color = palette[i % palette.Length];
+                Handles.color = playerPalette[i % playerPalette.Length];
                 for (int p = 0; p < trail.Count - 1; p++)
                     Handles.DrawLine(trail[p], trail[p + 1]);
             }
@@ -322,33 +321,61 @@ namespace QATool
         }
 
         private static void DrawEvents()
-        {
-            if (!QAToolGlobals.showEvents || cachedEntries == null) return;
-            if (Event.current.type != EventType.Repaint) return;
+{
+    if (!QAToolGlobals.showEvents || entriesByFile == null) return;
+    if (Event.current.type != EventType.Repaint) return;
 
-            foreach (QAToolTelemetryClass.Entry entry in cachedEntries)
-            {
-                if (entry == null) continue;
-                if (entry.type != QAToolJSONTypes.Event.ToString()) continue;
-                if (entry.args == null) continue;
-                if (!entry.args.TryGetValue("event", out object evt)) continue;
-                if (evt == null) continue;
+    Camera sceneCamera = SceneView.currentDrawingSceneView?.camera;
+    if (sceneCamera == null) return;
 
-                Vector3 pos  = entry.position.ToVector3();
-                float   size = HandleUtility.GetHandleSize(pos) * 0.25f;
+    Vector3 camPos = sceneCamera.transform.position;
 
-                Handles.DrawWireCube(pos, Vector3.one * size);
-                Handles.SphereHandleCap(0, pos, Quaternion.identity, size, EventType.Repaint);
-                Handles.Label(pos + Vector3.up * size, evt.ToString());
-            }
-        }
+    bool trailActive = temporalTrail.Count > 0;
+
+    var candidates = entriesByFile
+        .SelectMany((file, fileIndex) => file
+            .Where(e => e != null
+                     && e.type == QAToolJSONTypes.Event.ToString()
+                     && e.args != null
+                     && e.args.ContainsKey("event")
+                     && (!trailActive || fileIndex == activeFileIndex)) // <-- only this line added
+            .Select(e => (entry: e, fileIndex)))
+        .OrderByDescending(t => Vector3.Distance(camPos, t.entry.position.ToVector3()))
+        .ToList();
+
+    GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+    GUIStyle abbrStyle  = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
+
+    foreach (var (entry, fileIndex) in candidates)
+    {
+        if (!entry.args.TryGetValue("event", out object evt) || evt == null) continue;
+
+        string  evtName = evt.ToString();
+        string  abbr    = evtName.Length > 2 ? evtName.Substring(0, 2).ToUpper() : evtName.ToUpper();
+        Vector3 pos     = entry.position.ToVector3();
+        float   size    = 0.5f;
+        float   dist    = Vector3.Distance(camPos, pos);
+        Color   color   = playerPalette[fileIndex % playerPalette.Length];
+
+        labelStyle.fontSize            = Mathf.Clamp(Mathf.RoundToInt(300f / dist), 8, 64);
+        labelStyle.normal.textColor    = color;
+        abbrStyle.fontSize             = Mathf.Clamp(Mathf.RoundToInt(200f / dist), 6, 48);
+        abbrStyle.normal.textColor     = Color.black;
+
+        Handles.color = color;
+        Handles.DrawWireCube(pos, Vector3.one * size);
+        Handles.SphereHandleCap(0, pos, Quaternion.identity, size, EventType.Repaint);
+        Handles.Label(pos + Vector3.up * size, evtName, labelStyle);
+        Handles.Label(pos, abbr, abbrStyle);
+    }
+}
 
         private static void DrawTemporalTrail()
         {
             if (temporalTrail.Count == 0) return;
 
-            int   drawUpTo   = isPreview ? temporalTrail.Count - 1 : scrubIndex;
-            float thickness  = isPreview ? 6f : 4f;
+            int   drawUpTo  = isPreview ? temporalTrail.Count - 1 : scrubIndex;
+            float thickness = isPreview ? 6f : 4f;
 
             Handles.color = Color.white;
             Handles.DrawAAPolyLine(thickness, temporalTrail.Take(drawUpTo + 1).ToArray());
@@ -366,6 +393,7 @@ namespace QATool
             QAToolSceneValidator.ForceValidate();
 
             cachedEntries = FlattenEntries(data);
+            entriesByFile = data;
 
             trailsByFile = data
                 .Select(file => file

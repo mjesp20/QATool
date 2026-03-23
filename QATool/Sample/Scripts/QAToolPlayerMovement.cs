@@ -20,10 +20,6 @@ namespace QATool.Sample
             float moveZ = Input.GetAxisRaw("Vertical");
 
             movement = new Vector3(-moveX, 0f, -moveZ).normalized;
-            /*if (movement != Vector3.zero)
-            {
-                transform.forward = movement;
-            }*/
         }
 
         void FixedUpdate()
