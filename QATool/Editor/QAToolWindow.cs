@@ -372,7 +372,10 @@ namespace QATool
         if (Event.current.type != EventType.Repaint) continue;
 
         labelStyle.fontSize            = Mathf.Clamp(Mathf.RoundToInt(300f / dist), 8, 64);
-        labelStyle.normal.textColor    = color;
+        labelStyle.normal.textColor  = color;
+        labelStyle.hover.textColor   = color;
+        labelStyle.active.textColor  = color;
+        labelStyle.focused.textColor = color;
         abbrStyle.fontSize             = Mathf.Clamp(Mathf.RoundToInt(200f / dist), 6, 48);
         abbrStyle.normal.textColor     = Color.black;
 
