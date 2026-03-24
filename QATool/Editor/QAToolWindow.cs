@@ -321,6 +321,8 @@ namespace QATool
 
             for (int i = 0; i < trailsByFile.Count; i++)
             {
+                if (!isPreview && i != activeFileIndex) continue;
+
                 List<Vector3> trail = trailsByFile[i];
                 if (trail == null || trail.Count == 0) continue;
 
@@ -412,10 +414,15 @@ namespace QATool
             if (temporalTrail.Count == 0) return;
 
             int   drawUpTo  = isPreview ? temporalTrail.Count - 1 : scrubIndex;
-            float thickness = isPreview ? 6f : 4f;
+            float thickness = QAToolGlobals.ghostTrailThickness + 3f;
 
             Handles.color = Color.white;
-            Handles.DrawAAPolyLine(thickness, temporalTrail.Take(drawUpTo + 1).ToArray());
+
+            if (isPreview)
+                Handles.DrawAAPolyLine(thickness, temporalTrail.Take(drawUpTo + 1).ToArray());
+            else
+                Handles.DrawAAPolyLine(LineTex, thickness, temporalTrail.Take(drawUpTo + 1).ToArray());
+
             Handles.DrawSolidDisc(temporalTrail[scrubIndex], Vector3.up, 0.2f);
         }
 
