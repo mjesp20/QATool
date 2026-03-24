@@ -15,6 +15,7 @@ namespace QATool
         public static string name          = "QATool";
         public static string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         public static string folderPath    = Path.Combine(documentsPath, name, Application.productName);
+        public static float ghostTrailThickness = 2f;
 
         // -------------------------------------------------------------------
         // Flag types — editor writes to EditorPrefs via QAToolConfig;

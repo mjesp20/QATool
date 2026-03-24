@@ -19,6 +19,26 @@ namespace QATool
         private static readonly Color[] playerPalette = { Color.red, Color.cyan, Color.green, Color.yellow, Color.magenta };
 
         // ──────────────────────────────────────────────
+        //  Line texture (sharp DrawAAPolyLine rendering)
+        // ──────────────────────────────────────────────
+
+        private static Texture2D _lineTex;
+
+        private static Texture2D LineTex
+        {
+            get
+            {
+                if (_lineTex == null)
+                {
+                    _lineTex = new Texture2D(1, 1);
+                    _lineTex.SetPixel(0, 0, Color.white);
+                    _lineTex.Apply();
+                }
+                return _lineTex;
+            }
+        }
+
+        // ──────────────────────────────────────────────
         //  Temporal-trail state
         // ──────────────────────────────────────────────
 
@@ -185,6 +205,7 @@ namespace QATool
             GUILayout.Label("Settings", EditorStyles.miniBoldLabel);
             QAToolGlobals.feedbackKeyCode      = EditorGUILayout.TextField("Feedback Key",         QAToolGlobals.feedbackKeyCode);
             QAToolGlobals.dataPointsPerSecond  = EditorGUILayout.FloatField("Data Points / Sec",   QAToolGlobals.dataPointsPerSecond);
+            QAToolGlobals.ghostTrailThickness  = EditorGUILayout.Slider("Trail Thickness",         QAToolGlobals.ghostTrailThickness, 1f, 10f);
         }
 
         private void DrawHeatmapControls()
@@ -304,8 +325,7 @@ namespace QATool
                 if (trail == null || trail.Count == 0) continue;
 
                 Handles.color = playerPalette[i % playerPalette.Length];
-                for (int p = 0; p < trail.Count - 1; p++)
-                    Handles.DrawLine(trail[p], trail[p + 1]);
+                Handles.DrawAAPolyLine(LineTex, QAToolGlobals.ghostTrailThickness, trail.ToArray());
             }
         }
 
@@ -321,71 +341,71 @@ namespace QATool
         }
 
         private static void DrawEvents()
-{
-    if (!QAToolGlobals.showEvents || entriesByFile == null) return;
-
-    Camera sceneCamera = SceneView.currentDrawingSceneView?.camera;
-    if (sceneCamera == null) return;
-
-    Vector3 camPos = sceneCamera.transform.position;
-
-    bool trailActive = temporalTrail.Count > 0;
-
-    var candidates = entriesByFile
-        .SelectMany((file, fileIndex) => file
-            .Where(e => e != null
-                     && e.type == QAToolJSONTypes.Event.ToString()
-                     && e.args != null
-                     && e.args.ContainsKey("event")
-                     && (!trailActive || fileIndex == activeFileIndex))
-            .Select(e => (entry: e, fileIndex)))
-        .OrderByDescending(t => Vector3.Distance(camPos, t.entry.position.ToVector3()))
-        .ToList();
-
-    GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
-    GUIStyle abbrStyle  = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
-
-    foreach (var (entry, fileIndex) in candidates)
-    {
-        if (!entry.args.TryGetValue("event", out object evt) || evt == null) continue;
-
-        string  evtName = evt.ToString();
-        string  abbr    = evtName.Length > 2 ? evtName.Substring(0, 2).ToUpper() : evtName.ToUpper();
-        Vector3 pos     = entry.position.ToVector3();
-        float   size    = 0.5f;
-        float   dist    = Vector3.Distance(camPos, pos);
-        Color   color   = playerPalette[fileIndex % playerPalette.Length];
-
-        // Register a control ID for this sphere so Unity can track hover/click
-        int controlId = GUIUtility.GetControlID(FocusType.Passive);
-        HandleUtility.AddControl(controlId, HandleUtility.DistanceToCube(pos, Quaternion.identity, size));
-
-        // Handle click
-        if (Event.current.type == EventType.MouseDown
-            && Event.current.button == 0
-            && HandleUtility.nearestControl == controlId)
         {
-            QAToolEventInspectorWindow.Show(entry, fileIndex, color);
-            Event.current.Use();
+            if (!QAToolGlobals.showEvents || entriesByFile == null) return;
+
+            Camera sceneCamera = SceneView.currentDrawingSceneView?.camera;
+            if (sceneCamera == null) return;
+
+            Vector3 camPos = sceneCamera.transform.position;
+
+            bool trailActive = temporalTrail.Count > 0;
+
+            var candidates = entriesByFile
+                .SelectMany((file, fileIndex) => file
+                    .Where(e => e != null
+                             && e.type == QAToolJSONTypes.Event.ToString()
+                             && e.args != null
+                             && e.args.ContainsKey("event")
+                             && (!trailActive || fileIndex == activeFileIndex))
+                    .Select(e => (entry: e, fileIndex)))
+                .OrderByDescending(t => Vector3.Distance(camPos, t.entry.position.ToVector3()))
+                .ToList();
+
+            GUIStyle labelStyle = new GUIStyle(GUI.skin.label);
+            GUIStyle abbrStyle  = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
+
+            foreach (var (entry, fileIndex) in candidates)
+            {
+                if (!entry.args.TryGetValue("event", out object evt) || evt == null) continue;
+
+                string  evtName = evt.ToString();
+                string  abbr    = evtName.Length > 2 ? evtName.Substring(0, 2).ToUpper() : evtName.ToUpper();
+                Vector3 pos     = entry.position.ToVector3();
+                float   size    = 0.5f;
+                float   dist    = Vector3.Distance(camPos, pos);
+                Color   color   = playerPalette[fileIndex % playerPalette.Length];
+
+                // Register a control ID for this sphere so Unity can track hover/click
+                int controlId = GUIUtility.GetControlID(FocusType.Passive);
+                HandleUtility.AddControl(controlId, HandleUtility.DistanceToCube(pos, Quaternion.identity, size));
+
+                // Handle click
+                if (Event.current.type == EventType.MouseDown
+                    && Event.current.button == 0
+                    && HandleUtility.nearestControl == controlId)
+                {
+                    QAToolEventInspectorWindow.Show(entry, fileIndex, color);
+                    Event.current.Use();
+                }
+
+                if (Event.current.type != EventType.Repaint) continue;
+
+                labelStyle.fontSize            = Mathf.Clamp(Mathf.RoundToInt(300f / dist), 8, 64);
+                labelStyle.normal.textColor    = color;
+                labelStyle.hover.textColor     = color;
+                labelStyle.active.textColor    = color;
+                labelStyle.focused.textColor   = color;
+                abbrStyle.fontSize             = Mathf.Clamp(Mathf.RoundToInt(200f / dist), 6, 48);
+                abbrStyle.normal.textColor     = Color.black;
+
+                Handles.color = color;
+                Handles.DrawWireCube(pos, Vector3.one * size);
+                Handles.SphereHandleCap(0, pos, Quaternion.identity, size, EventType.Repaint);
+                Handles.Label(pos + Vector3.up * size, evtName, labelStyle);
+                Handles.Label(pos, abbr, abbrStyle);
+            }
         }
-
-        if (Event.current.type != EventType.Repaint) continue;
-
-        labelStyle.fontSize            = Mathf.Clamp(Mathf.RoundToInt(300f / dist), 8, 64);
-        labelStyle.normal.textColor  = color;
-        labelStyle.hover.textColor   = color;
-        labelStyle.active.textColor  = color;
-        labelStyle.focused.textColor = color;
-        abbrStyle.fontSize             = Mathf.Clamp(Mathf.RoundToInt(200f / dist), 6, 48);
-        abbrStyle.normal.textColor     = Color.black;
-
-        Handles.color = color;
-        Handles.DrawWireCube(pos, Vector3.one * size);
-        Handles.SphereHandleCap(0, pos, Quaternion.identity, size, EventType.Repaint);
-        Handles.Label(pos + Vector3.up * size, evtName, labelStyle);
-        Handles.Label(pos, abbr, abbrStyle);
-    }
-}
 
         private static void DrawTemporalTrail()
         {
