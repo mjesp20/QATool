@@ -323,7 +323,6 @@ namespace QATool
         private static void DrawEvents()
 {
     if (!QAToolGlobals.showEvents || entriesByFile == null) return;
-    if (Event.current.type != EventType.Repaint) return;
 
     Camera sceneCamera = SceneView.currentDrawingSceneView?.camera;
     if (sceneCamera == null) return;
@@ -338,7 +337,7 @@ namespace QATool
                      && e.type == QAToolJSONTypes.Event.ToString()
                      && e.args != null
                      && e.args.ContainsKey("event")
-                     && (!trailActive || fileIndex == activeFileIndex)) // <-- only this line added
+                     && (!trailActive || fileIndex == activeFileIndex))
             .Select(e => (entry: e, fileIndex)))
         .OrderByDescending(t => Vector3.Distance(camPos, t.entry.position.ToVector3()))
         .ToList();
@@ -356,6 +355,21 @@ namespace QATool
         float   size    = 0.5f;
         float   dist    = Vector3.Distance(camPos, pos);
         Color   color   = playerPalette[fileIndex % playerPalette.Length];
+
+        // Register a control ID for this sphere so Unity can track hover/click
+        int controlId = GUIUtility.GetControlID(FocusType.Passive);
+        HandleUtility.AddControl(controlId, HandleUtility.DistanceToCube(pos, Quaternion.identity, size));
+
+        // Handle click
+        if (Event.current.type == EventType.MouseDown
+            && Event.current.button == 0
+            && HandleUtility.nearestControl == controlId)
+        {
+            QAToolEventInspectorWindow.Show(entry, fileIndex, color);
+            Event.current.Use();
+        }
+
+        if (Event.current.type != EventType.Repaint) continue;
 
         labelStyle.fontSize            = Mathf.Clamp(Mathf.RoundToInt(300f / dist), 8, 64);
         labelStyle.normal.textColor    = color;
