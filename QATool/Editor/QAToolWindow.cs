@@ -193,45 +193,45 @@ namespace QATool
                 popupButtonRect = GUILayoutUtility.GetLastRect();
         }
 
-        private void DrawVisualisationToggles()
-        {
-            GUILayout.Label("Toggles", EditorStyles.miniBoldLabel);
-            QAToolGlobals.showGhostTrails    = EditorGUILayout.Toggle("Show Ghost Trails",    QAToolGlobals.showGhostTrails);
-            QAToolGlobals.showHeatMap        = EditorGUILayout.Toggle("Show Heat Map",        QAToolGlobals.showHeatMap);
-            QAToolGlobals.showFeedbackNotes  = EditorGUILayout.Toggle("Show Feedback Notes",  QAToolGlobals.showFeedbackNotes);
-            QAToolGlobals.showEvents         = EditorGUILayout.Toggle("Show Events",          QAToolGlobals.showEvents);
+       private void DrawVisualisationToggles()
+{
+    GUILayout.Label("Toggles", EditorStyles.miniBoldLabel);
+    QAToolGlobals.showGhostTrails   = EditorGUILayout.Toggle(new GUIContent("Show Ghost Trails",   "Draws a trail for each player file loaded."),    QAToolGlobals.showGhostTrails);
+    QAToolGlobals.showHeatMap       = EditorGUILayout.Toggle(new GUIContent("Show Heat Map",       "Overlays a heatmap showing where players spent the most time."), QAToolGlobals.showHeatMap);
+    QAToolGlobals.showFeedbackNotes = EditorGUILayout.Toggle(new GUIContent("Show Feedback Notes", "Displays in-world labels for any feedback notes recorded."),      QAToolGlobals.showFeedbackNotes);
+    QAToolGlobals.showEvents        = EditorGUILayout.Toggle(new GUIContent("Show Events",         "Renders clickable events, each showing individual event data."), QAToolGlobals.showEvents);
 
-            GUILayout.Space(4);
-            GUILayout.Label("Settings", EditorStyles.miniBoldLabel);
-            QAToolGlobals.feedbackKeyCode      = EditorGUILayout.TextField("Feedback Key",         QAToolGlobals.feedbackKeyCode);
-            QAToolGlobals.dataPointsPerSecond  = EditorGUILayout.FloatField("Data Points / Sec",   QAToolGlobals.dataPointsPerSecond);
-            QAToolGlobals.ghostTrailThickness  = EditorGUILayout.Slider("Trail Thickness",         QAToolGlobals.ghostTrailThickness, 1f, 10f);
-        }
+    GUILayout.Space(4);
+    GUILayout.Label("Settings", EditorStyles.miniBoldLabel);
+    QAToolGlobals.feedbackKeyCode     = EditorGUILayout.TextField(new GUIContent("Feedback Key",     "The key players press in-game to submit a feedback note."),          QAToolGlobals.feedbackKeyCode);
+    QAToolGlobals.dataPointsPerSecond = EditorGUILayout.FloatField(new GUIContent("Data Points / Sec", "How many data points are recorded per second during a session."), QAToolGlobals.dataPointsPerSecond);
+    QAToolGlobals.ghostTrailThickness = EditorGUILayout.Slider(new GUIContent("Trail Thickness",    "Controls the thickness of all ghost trail lines in the scene view."),  QAToolGlobals.ghostTrailThickness, 1f, 10f);
+}
 
-        private void DrawHeatmapControls()
-        {
-            GUILayout.Space(6);
-            GUILayout.Label("Heatmap", EditorStyles.miniBoldLabel);
+private void DrawHeatmapControls()
+{
+    GUILayout.Space(6);
+    GUILayout.Label("Heatmap", EditorStyles.miniBoldLabel);
 
-            QAToolGlobals.heatmapCellSize  = EditorGUILayout.Slider("Cell Size",  QAToolGlobals.heatmapCellSize,  0.2f, 5f);
-            QAToolGlobals.heatmapOpacity   = EditorGUILayout.Slider("Opacity",    QAToolGlobals.heatmapOpacity,   0f,   1f);
-            QAToolGlobals.heatmapContrast  = EditorGUILayout.Slider("Contrast",   QAToolGlobals.heatmapContrast,  0f,   3f);
+    QAToolGlobals.heatmapCellSize = EditorGUILayout.Slider(new GUIContent("Cell Size", "The size of each heatmap grid cell. Larger cells are broader but less precise."), QAToolGlobals.heatmapCellSize, 0.2f, 5f);
+    QAToolGlobals.heatmapOpacity  = EditorGUILayout.Slider(new GUIContent("Opacity",   "Overall transparency of the heatmap overlay."),                                   QAToolGlobals.heatmapOpacity,  0f,   1f);
+    QAToolGlobals.heatmapContrast = EditorGUILayout.Slider(new GUIContent("Contrast",  "Increases the difference between low and high density areas."),                   QAToolGlobals.heatmapContrast, 0f,   3f);
 
-            GUILayout.Space(2);
-            GUILayout.Label("Percentile Range", EditorStyles.miniLabel);
+    GUILayout.Space(2);
+    GUILayout.Label("Percentile Range", EditorStyles.miniLabel);
 
-            float min = QAToolGlobals.heatmapMinPercentile;
-            float max = QAToolGlobals.heatmapMaxPercentile;
+    float min = QAToolGlobals.heatmapMinPercentile;
+    float max = QAToolGlobals.heatmapMaxPercentile;
 
-            EditorGUILayout.MinMaxSlider(ref min, ref max, 0f, 1f);
-            EditorGUILayout.BeginHorizontal();
-            min = EditorGUILayout.FloatField(min, GUILayout.MaxWidth(50));
-            max = EditorGUILayout.FloatField(max, GUILayout.MaxWidth(50));
-            EditorGUILayout.EndHorizontal();
+    EditorGUILayout.MinMaxSlider(new GUIContent("", "Clamps which density percentile range is shown. Use to filter out extreme outliers."), ref min, ref max, 0f, 1f);
+    EditorGUILayout.BeginHorizontal();
+    min = EditorGUILayout.FloatField(min, GUILayout.MaxWidth(50));
+    max = EditorGUILayout.FloatField(max, GUILayout.MaxWidth(50));
+    EditorGUILayout.EndHorizontal();
 
-            QAToolGlobals.heatmapMinPercentile = Mathf.Clamp01(min);
-            QAToolGlobals.heatmapMaxPercentile = Mathf.Clamp01(max);
-        }
+    QAToolGlobals.heatmapMinPercentile = Mathf.Clamp01(min);
+    QAToolGlobals.heatmapMaxPercentile = Mathf.Clamp01(max);
+}
 
         private void DrawTemporalTrailSection()
         {
@@ -321,6 +321,8 @@ namespace QATool
 
             for (int i = 0; i < trailsByFile.Count; i++)
             {
+                if (!isPreview && i != activeFileIndex) continue;
+
                 List<Vector3> trail = trailsByFile[i];
                 if (trail == null || trail.Count == 0) continue;
 
@@ -338,6 +340,28 @@ namespace QATool
                 if (entry.args.TryGetValue("note", out object note))
                     Handles.Label(entry.position.ToVector3(), note.ToString());
             }
+        }
+
+        /// <summary>Draws a label with a solid outline by rendering it multiple times offset in each direction.</summary>
+        private static void DrawOutlinedLabel(Vector3 pos, string text, GUIStyle style, Color outlineColor)
+        {
+            GUIStyle outlineStyle = new GUIStyle(style) { normal = { textColor = outlineColor } };
+
+            Camera cam = SceneView.currentDrawingSceneView.camera;
+
+            // Keep the offset a fixed pixel size regardless of distance
+            float dist        = Vector3.Distance(cam.transform.position, pos);
+            float worldOffset = 1.5f * dist / cam.pixelHeight * 2f * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+
+            Vector3 r = cam.transform.right * worldOffset;
+            Vector3 u = cam.transform.up    * worldOffset;
+
+            Handles.Label(pos + r, text, outlineStyle);
+            Handles.Label(pos - r, text, outlineStyle);
+            Handles.Label(pos + u, text, outlineStyle);
+            Handles.Label(pos - u, text, outlineStyle);
+
+            Handles.Label(pos, text, style);
         }
 
         private static void DrawEvents()
@@ -391,19 +415,20 @@ namespace QATool
 
                 if (Event.current.type != EventType.Repaint) continue;
 
-                labelStyle.fontSize            = Mathf.Clamp(Mathf.RoundToInt(300f / dist), 8, 64);
-                labelStyle.normal.textColor    = color;
-                labelStyle.hover.textColor     = color;
-                labelStyle.active.textColor    = color;
-                labelStyle.focused.textColor   = color;
-                abbrStyle.fontSize             = Mathf.Clamp(Mathf.RoundToInt(200f / dist), 6, 48);
-                abbrStyle.normal.textColor     = Color.black;
+                labelStyle.fontSize          = Mathf.Clamp(Mathf.RoundToInt(300f / dist), 8, 64);
+                labelStyle.normal.textColor  = color;
+                labelStyle.hover.textColor   = color;
+                labelStyle.active.textColor  = color;
+                labelStyle.focused.textColor = color;
+                abbrStyle.fontSize           = Mathf.Clamp(Mathf.RoundToInt(200f / dist), 6, 48);
+                abbrStyle.normal.textColor   = Color.black;
 
                 Handles.color = color;
                 Handles.DrawWireCube(pos, Vector3.one * size);
                 Handles.SphereHandleCap(0, pos, Quaternion.identity, size, EventType.Repaint);
-                Handles.Label(pos + Vector3.up * size, evtName, labelStyle);
-                Handles.Label(pos, abbr, abbrStyle);
+
+                DrawOutlinedLabel(pos + Vector3.up * size, evtName, labelStyle, Color.black);
+                DrawOutlinedLabel(pos, abbr, abbrStyle, color);
             }
         }
 
@@ -412,10 +437,15 @@ namespace QATool
             if (temporalTrail.Count == 0) return;
 
             int   drawUpTo  = isPreview ? temporalTrail.Count - 1 : scrubIndex;
-            float thickness = isPreview ? 6f : 4f;
+            float thickness = QAToolGlobals.ghostTrailThickness + 3f;
 
             Handles.color = Color.white;
-            Handles.DrawAAPolyLine(thickness, temporalTrail.Take(drawUpTo + 1).ToArray());
+
+            if (isPreview)
+                Handles.DrawAAPolyLine(thickness, temporalTrail.Take(drawUpTo + 1).ToArray());
+            else
+                Handles.DrawAAPolyLine(LineTex, thickness, temporalTrail.Take(drawUpTo + 1).ToArray());
+
             Handles.DrawSolidDisc(temporalTrail[scrubIndex], Vector3.up, 0.2f);
         }
 
