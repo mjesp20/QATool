@@ -434,7 +434,7 @@ namespace QATool
 
             trailsByFile = data
                 .Select(file => file
-                    .Where(e => e.type == "Movement")
+                    .Where(e => e != null && e.type == "Movement")
                     .Select(e => e.position.ToVector3())
                     .ToList())
                 .ToList();

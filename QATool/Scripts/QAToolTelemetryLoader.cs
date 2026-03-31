@@ -113,6 +113,10 @@ namespace QATool
                 object entryVal = QAToolGlobals.NormalizeType(arg.Value);
                 object filterVal = QAToolGlobals.NormalizeType(filter.value);
 
+                if (filterVal == null)
+                    continue;
+
+
                 // Both must be IComparable for ordered comparisons
                 IComparable comparable = entryVal as IComparable;
 
