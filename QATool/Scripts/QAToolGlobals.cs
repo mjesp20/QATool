@@ -18,6 +18,29 @@ namespace QATool
         public static float ghostTrailThickness = 2f;
         public static int feedbackPreviewLength = 4;
         public static float renderRadius = 25f;
+        
+        
+        
+        
+        public static void ResetToDefaults()
+        {
+            showGhostTrails   = true;
+            showHeatMap       = false;
+            showFeedbackNotes = true;
+            showEvents        = false;
+
+            feedbackKeyCode       = "F";
+            feedbackPreviewLength = 10;
+            renderRadius          = 50f;
+            dataPointsPerSecond   = 10f;
+            ghostTrailThickness   = 2f;
+
+            heatmapCellSize       = 1f;
+            heatmapOpacity        = 0.5f;
+            heatmapContrast       = 1f;
+            heatmapMinPercentile  = 0f;
+            heatmapMaxPercentile  = 1f;
+        }
 
         // -------------------------------------------------------------------
         // Flag types — editor writes to EditorPrefs via QAToolConfig;
@@ -253,4 +276,5 @@ namespace QATool
             public object         value;
         }
     }
+    
 }

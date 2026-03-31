@@ -222,6 +222,15 @@ namespace QATool
             if (Event.current.type == EventType.Repaint)
                 popupButtonRect = GUILayoutUtility.GetLastRect();
         }
+        
+        private void ResetAllSettings()
+        {
+            QAToolGlobals.ResetToDefaults();
+
+            RebuildCandidateCaches();
+            QAToolSceneValidator.ForceValidate();
+            RepaintScene();
+        }
 
         private void DrawVisualisationToggles()
         {
@@ -238,6 +247,24 @@ namespace QATool
             QAToolGlobals.renderRadius = EditorGUILayout.Slider(new GUIContent("Render Radius", "Only show events and feedback within this distance from the Scene camera."), QAToolGlobals.renderRadius, 1f, 200f);
             QAToolGlobals.dataPointsPerSecond    = EditorGUILayout.FloatField( new GUIContent("Data Points / Sec",      "How many data points are recorded per second during a session."),          QAToolGlobals.dataPointsPerSecond);
             QAToolGlobals.ghostTrailThickness    = EditorGUILayout.Slider(     new GUIContent("Trail Thickness",        "Controls the thickness of all ghost trail lines in the scene view."),      QAToolGlobals.ghostTrailThickness, 1f, 10f);
+            GUILayout.Space(6);
+
+            Color prev = GUI.backgroundColor;
+            GUI.backgroundColor = new Color(1f, 0.6f, 0.2f); // orange-ish
+
+            if (GUILayout.Button("Reset to Defaults", GUILayout.Height(24)))
+            {
+                if (EditorUtility.DisplayDialog(
+                        "Reset Settings",
+                        "Are you sure you want to reset all settings to default values?",
+                        "Yes",
+                        "Cancel"))
+                {
+                    ResetAllSettings();
+                }
+            }
+
+            GUI.backgroundColor = prev;
         }
 
         private void DrawHeatmapControls()
