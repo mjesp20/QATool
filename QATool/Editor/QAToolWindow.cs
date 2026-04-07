@@ -72,6 +72,13 @@ namespace QATool
         private static bool isPreview = true;
 
         // ──────────────────────────────────────────────
+        //  Heatmap state
+        // ──────────────────────────────────────────────
+
+        private static Dictionary<Vector3Int, int> _heatmap = new Dictionary<Vector3Int, int>();
+        private static float _lastHeatmapCellSize = -1f;
+
+        // ──────────────────────────────────────────────
         //  Misc editor state
         // ──────────────────────────────────────────────
 
@@ -82,7 +89,7 @@ namespace QATool
         //  Foldout state
         // ──────────────────────────────────────────────
 
-        private bool _foldWindows       = true;
+        private bool _foldWindows = true;
         private bool _foldVisualisation = true;
         private bool _foldTemporalTrail = true;
 
@@ -144,9 +151,19 @@ namespace QATool
                 bool controlJustReleased = _lastHotControl != 0 && GUIUtility.hotControl == 0;
                 if (controlJustReleased)
                 {
+                    // Rebuild heatmap grid if cell size changed or heatmap was just toggled on
+                    if (QAToolGlobals.heatmapCellSize != _lastHeatmapCellSize)
+                        LoadHeatmap();
+
                     QAToolSceneValidator.ForceValidate();
                     RepaintScene();
                 }
+                else if (changed)
+                {
+                    // Cheap path: only repaint for opacity / contrast / percentile changes
+                    RepaintScene();
+                }
+
                 _lastHotControl = GUIUtility.hotControl;
             });
             DrawHorizontalLine();
@@ -188,10 +205,10 @@ namespace QATool
         {
             GUIStyle reloadStyle = new GUIStyle(GUI.skin.button)
             {
-                fontSize    = 13,
-                fontStyle   = FontStyle.Bold,
+                fontSize = 13,
+                fontStyle = FontStyle.Bold,
                 fixedHeight = 46f,
-                alignment   = TextAnchor.MiddleCenter,
+                alignment = TextAnchor.MiddleCenter,
             };
 
             Color prevBg = GUI.backgroundColor;
@@ -357,7 +374,7 @@ namespace QATool
             if (newIndex != scrubIndex)
             {
                 scrubIndex = newIndex;
-                isPreview  = false;
+                isPreview = false;
                 RepaintScene();
             }
         }
@@ -369,6 +386,7 @@ namespace QATool
         static void OnSceneGUI(SceneView sceneView)
         {
             DrawGhostTrails();
+            DrawHeatmap();
             DrawFeedbackNotes();
             DrawEvents();
             DrawTemporalTrail();
@@ -401,6 +419,84 @@ namespace QATool
                 Handles.DrawAAPolyLine(LineTex, QAToolGlobals.ghostTrailThickness, trail.ToArray());
             }
         }
+
+        private static void DrawHeatmap()
+        {
+            if (!QAToolGlobals.showHeatMap || _heatmap == null || _heatmap.Count == 0) return;
+
+            Camera cam = SceneView.currentDrawingSceneView?.camera;
+            if (cam == null) return;
+
+            float cellSize = QAToolGlobals.heatmapCellSize;
+            Vector3 camPos = cam.transform.position;
+
+            // Build sorted list back-to-front for correct transparency blending
+            List<KeyValuePair<Vector3Int, int>> cells = _heatmap
+                .OrderByDescending(kvp =>
+                {
+                    Vector3 c = CellCenter(kvp.Key, cellSize);
+                    return Vector3.Distance(camPos, c);
+                })
+                .ToList();
+
+            // Compute percentile thresholds from sorted value list
+            List<int> sorted = _heatmap.Values.OrderBy(v => v).ToList();
+            int total = sorted.Count;
+            int minIndex = Mathf.Clamp(Mathf.FloorToInt(QAToolGlobals.heatmapMinPercentile * (total - 1)), 0, total - 1);
+            int maxIndex = Mathf.Clamp(Mathf.FloorToInt(QAToolGlobals.heatmapMaxPercentile * (total - 1)), 0, total - 1);
+
+            int minThreshold = sorted[minIndex];
+            int maxThreshold = sorted[maxIndex];
+
+            float logMin = Mathf.Max(1, minThreshold);
+            float logMax = Mathf.Max(logMin + 1, maxThreshold);
+
+            foreach (KeyValuePair<Vector3Int, int> kvp in cells)
+            {
+                if (kvp.Value < minThreshold || kvp.Value > maxThreshold) continue;
+
+                float normalized = Mathf.Log(kvp.Value - logMin + 2f) / Mathf.Log(logMax - logMin + 2f);
+                normalized = Mathf.Pow(normalized, QAToolGlobals.heatmapContrast);
+
+                Color col = Color.Lerp(Color.green, Color.red, normalized);
+                col.a = QAToolGlobals.heatmapOpacity;
+
+                DrawSolidCube(CellCenter(kvp.Key, cellSize), cellSize, col);
+            }
+        }
+
+        /// <summary>
+        /// Draws a solid, axis-aligned cube using Handles.DrawAAConvexPolygon for each face.
+        /// Handles has no solid-cube primitive, so we render all six quads manually.
+        /// </summary>
+        private static void DrawSolidCube(Vector3 center, float size, Color color)
+        {
+            float h = size * 0.5f;
+            Handles.color = color;
+
+            // Pre-compute the 8 corners
+            Vector3 p000 = center + new Vector3(-h, -h, -h);
+            Vector3 p001 = center + new Vector3(-h, -h, h);
+            Vector3 p010 = center + new Vector3(-h, h, -h);
+            Vector3 p011 = center + new Vector3(-h, h, h);
+            Vector3 p100 = center + new Vector3(h, -h, -h);
+            Vector3 p101 = center + new Vector3(h, -h, h);
+            Vector3 p110 = center + new Vector3(h, h, -h);
+            Vector3 p111 = center + new Vector3(h, h, h);
+
+            Handles.DrawAAConvexPolygon(p010, p110, p111, p011); // Top
+            Handles.DrawAAConvexPolygon(p000, p001, p101, p100); // Bottom
+            Handles.DrawAAConvexPolygon(p001, p011, p111, p101); // Front  (+Z)
+            Handles.DrawAAConvexPolygon(p000, p100, p110, p010); // Back   (-Z)
+            Handles.DrawAAConvexPolygon(p000, p010, p011, p001); // Left   (-X)
+            Handles.DrawAAConvexPolygon(p100, p101, p111, p110); // Right  (+X)
+        }
+
+        private static Vector3 CellCenter(Vector3Int cell, float cellSize) =>
+            new Vector3(
+                cell.x * cellSize + cellSize * 0.5f,
+                cell.y * cellSize + cellSize * 0.5f,
+                cell.z * cellSize + cellSize * 0.5f);
 
         private static void DrawFeedbackNotes()
         {
@@ -585,7 +681,7 @@ namespace QATool
             if (temporalTrail.Count == 0) return;
             if (Event.current.type != EventType.Repaint) return;
 
-            int   drawUpTo  = isPreview ? temporalTrail.Count - 1 : scrubIndex;
+            int drawUpTo = isPreview ? temporalTrail.Count - 1 : scrubIndex;
             float thickness = QAToolGlobals.ghostTrailThickness + 3f;
 
             Handles.color = Color.white;
@@ -749,6 +845,38 @@ namespace QATool
         }
 
         // ──────────────────────────────────────────────
+        //  Heatmap loading
+        // ──────────────────────────────────────────────
+
+        /// <summary>
+        /// Rebuilds the heatmap dictionary from all loaded telemetry entries.
+        /// Called on data reload and whenever the cell size slider is released.
+        /// </summary>
+        private static void LoadHeatmap()
+        {
+            _heatmap.Clear();
+            _lastHeatmapCellSize = QAToolGlobals.heatmapCellSize;
+
+            float cellSize = QAToolGlobals.heatmapCellSize;
+
+            IEnumerable<Vector3> positions = QAToolTelemetryLoader.GetAllEntries()
+                .Select(entry => entry.position.ToVector3());
+
+            foreach (Vector3 pos in positions)
+            {
+                Vector3Int cell = new Vector3Int(
+                    Mathf.FloorToInt(pos.x / cellSize),
+                    Mathf.FloorToInt(pos.y / cellSize),
+                    Mathf.FloorToInt(pos.z / cellSize));
+
+                if (!_heatmap.ContainsKey(cell))
+                    _heatmap[cell] = 0;
+
+                _heatmap[cell]++;
+            }
+        }
+
+        // ──────────────────────────────────────────────
         //  Temporal-trail helpers
         // ──────────────────────────────────────────────
 
@@ -767,7 +895,7 @@ namespace QATool
 
         private static void UnloadTemporalTrail()
         {
-            temporalTrail   = new List<Vector3>();
+            temporalTrail = new List<Vector3>();
             activeFileIndex = 0;
             scrubIndex      = 0;
             isPreview       = true;
