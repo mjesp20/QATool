@@ -165,7 +165,7 @@ namespace QATool
                     // Cheap path: only repaint for opacity / contrast / percentile changes
                     RepaintScene();
                 }
-                */
+                */  
 
                 _lastHotControl = GUIUtility.hotControl;
             });
