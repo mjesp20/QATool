@@ -11,7 +11,7 @@
   {
     "displayName": "QATool Samples",
     "description": "Example scenes demonstrating QATool usage",
-    "path": "Samples~/QAToolSamples"
+    "path": "QATool/Samples~/QAToolSamples"
   }
 ]
 }
