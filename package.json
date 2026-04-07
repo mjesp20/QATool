@@ -9,8 +9,8 @@
     },
     "samples": [
         {
-            "displayName": "Basic Usage",
-            "description": "Example scene showing how to use QATool",
+            "displayName": "Sample",
+            "description": "Sample scene demonstrating the use of QATool.",
             "path": "Sample~/Sample"
         }
     ]
