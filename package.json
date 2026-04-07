@@ -7,11 +7,11 @@
     "dependencies": {
         "com.unity.nuget.newtonsoft-json": "3.2.1"
     },
-    "samples": [
-        {
-            "displayName": "Sample",
-            "description": "Sample scene demonstrating the use of QATool.",
-            "path": "Sample~/Sample"
-        }
-    ]
+"samples": [
+  {
+    "displayName": "QATool Samples",
+    "description": "Example scenes demonstrating QATool usage",
+    "path": "Samples~/QAToolSamples"
+  }
+]
 }
