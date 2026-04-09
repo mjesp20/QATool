@@ -239,10 +239,13 @@ public class QAToolPlayerTracker : MonoBehaviour
         submitButton.onClick.AddListener(() => { SubmitNote(inputField, prompt); });
     }
     float timeScale;
+    bool cursorInitiallyVisible;
     private IEnumerator FocusInputField(TMP_InputField inputField)
     {
         timeScale = Time.timeScale;
         Time.timeScale = 0;
+        cursorInitiallyVisible = Cursor.visible;
+        Cursor.visible = true;
         yield return null;
         inputField.ActivateInputField();
         inputField.Select();
@@ -259,6 +262,7 @@ public class QAToolPlayerTracker : MonoBehaviour
         PrintJSON(QAToolJSONTypes.FeedbackNote, dict);
         Destroy(feedbackPanel);
         showingFeedbackNoteWindow = false;
+        Cursor.visible = cursorInitiallyVisible;
         Time.timeScale = timeScale;
     }
 
