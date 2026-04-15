@@ -297,7 +297,7 @@ namespace QATool
             GUILayout.Label("Settings", EditorStyles.miniBoldLabel);
             QAToolGlobals.feedbackKeyCode        = EditorGUILayout.TextField(  new GUIContent("Feedback Key",           "The key players press in-game to submit a feedback note."),                QAToolGlobals.feedbackKeyCode);
             QAToolGlobals.feedbackPreviewLength  = EditorGUILayout.IntSlider(  new GUIContent("Feedback Preview Chars", "How many characters of a feedback note are shown in the scene view before truncating."), QAToolGlobals.feedbackPreviewLength, 1, 20);
-            QAToolGlobals.renderRadius = EditorGUILayout.Slider(new GUIContent("Render Radius", "Only show events and feedback within this distance from the Scene camera."), QAToolGlobals.renderRadius, 1f, 200f);
+            QAToolGlobals.renderRadius = EditorGUILayout.Slider(new GUIContent("Render Radius", "Only show events and feedback within this distance from the Scene camera."), QAToolGlobals.renderRadius, 1f, 500f);
             QAToolGlobals.dataPointsPerSecond    = EditorGUILayout.FloatField( new GUIContent("Data Points / Sec",      "How many data points are recorded per second during a session."),          QAToolGlobals.dataPointsPerSecond);
             QAToolGlobals.ghostTrailThickness    = EditorGUILayout.Slider(     new GUIContent("Trail Thickness",        "Controls the thickness of all ghost trail lines in the scene view."),      QAToolGlobals.ghostTrailThickness, 1f, 10f);
             GUILayout.Space(6);
@@ -444,9 +444,11 @@ namespace QATool
             if (!QAToolGlobals.showGhostTrails || trailsByFile.Count == 0) return;
             if (Event.current.type != EventType.Repaint) return;
 
+            bool trailActive = temporalTrail.Count > 0;
+
             for (int i = 0; i < trailsByFile.Count; i++)
             {
-                if (!isPreview && i != activeFileIndex) continue;
+                if (trailActive && i != activeFileIndex) continue; // ← changed line
 
                 List<Vector3> trail = trailsByFile[i];
                 if (trail == null || trail.Count == 0) continue;
