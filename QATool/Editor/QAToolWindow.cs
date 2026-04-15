@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -114,13 +116,44 @@ namespace QATool
         // ──────────────────────────────────────────────
         //  GUI entry point
         // ──────────────────────────────────────────────
+        void OpenFolder()
+        {
+                EditorUtility.RevealInFinder(Path.Combine(QAToolGlobals.folderPath,Application.productName));
+        }
 
+        void MoveFiles(int num)
+        {
+
+
+            for (int i = 1; i <= num; i++)
+            {
+                string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "QATool", "Files", $"{i}.jsonl");
+                File.Copy(path, Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "QATool", Application.productName, $"{i}.jsonl")),true);
+            }
+        }
         void OnGUI()
         {
+            if (GUILayout.Button("Move 3 Files"))
+            {
+                MoveFiles(3);
+            }
+            if (GUILayout.Button("Move 8 Files"))
+            {
+                MoveFiles(8);
+            }
+            if (GUILayout.Button("Move 18 Files"))
+            {
+                MoveFiles(18);
+            }
             // ── Title ──────────────────────────────────
             GUILayout.Space(8);
             GUILayout.Label("QA Tool", EditorStyles.boldLabel);
             DrawHorizontalLine();
+
+            if (GUILayout.Button("Open Folder", GUILayout.Height(40)))
+            {
+                OpenFolder();
+            }
 
             // ── Reload Data (prominent) ────────────────
             GUILayout.Space(6);
