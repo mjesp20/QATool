@@ -17,7 +17,7 @@ namespace QATool
         public static string folderPath    = Path.Combine(documentsPath, name, Application.productName);
         public static float ghostTrailThickness = 2f;
         public static int feedbackPreviewLength = 4;
-        public static float renderRadius = 25f;
+        public static float renderRadius = 200f;
         
         
         

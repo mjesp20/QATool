@@ -390,9 +390,11 @@ namespace QATool
             if (!QAToolGlobals.showGhostTrails || trailsByFile.Count == 0) return;
             if (Event.current.type != EventType.Repaint) return;
 
+            bool trailActive = temporalTrail.Count > 0;
+
             for (int i = 0; i < trailsByFile.Count; i++)
             {
-                if (!isPreview && i != activeFileIndex) continue;
+                if (trailActive && i != activeFileIndex) continue; // ← changed line
 
                 List<Vector3> trail = trailsByFile[i];
                 if (trail == null || trail.Count == 0) continue;
