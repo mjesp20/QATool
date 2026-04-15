@@ -17,11 +17,11 @@ namespace QATool
         public static string folderPath    = Path.Combine(documentsPath, name, Application.productName);
         public static float ghostTrailThickness = 2f;
         public static int feedbackPreviewLength = 4;
-        public static float renderRadius = 200f;
-        
-        
-        
-        
+        public static float renderRadius = 25f;
+
+
+
+#if UNITY_EDITOR
         public static void ResetToDefaults()
         {
             showGhostTrails   = true;
@@ -41,6 +41,7 @@ namespace QATool
             heatmapMinPercentile  = 0f;
             heatmapMaxPercentile  = 1f;
         }
+#endif
 
         // -------------------------------------------------------------------
         // Flag types — editor writes to EditorPrefs via QAToolConfig;
