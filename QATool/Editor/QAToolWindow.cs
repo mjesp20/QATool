@@ -131,7 +131,7 @@ namespace QATool
         }
 
         private bool _foldMoveFiles = true;
-        
+
         void OnGUI()
         {
             // ── Move Files ────────────────────────────
@@ -148,7 +148,7 @@ namespace QATool
             GUILayout.Label("QA Tool", EditorStyles.boldLabel);
             DrawHorizontalLine();
 
-            if (GUILayout.Button("Open Folder", GUILayout.Height(40)))
+            if (GUILayout.Button("Open Folder", GUILayout.Height(20)))
             {
                 OpenFolder();
             }
