@@ -7,16 +7,13 @@ QATool is a Unity-based tool for tracking player behavior, visualizing movement,
 
 ---
 
-## Sample Scene
+To install QATool, Open the package manager and press "Add from git URL", Then paste https://github.com/mjesp20/QATool to get the package
 
-1. **Right-click** the sample scene and select **Play**.
-2. **Collect pickups** while playing.
-3. Switch to the **Scene View** during play mode.
-4. **Reload player data** to display path tracking.
+The package automatiaclly installs dependencies.
 
----
+Included with the package are two sample scenes, these are basic games to display the functionality of QATool
 
-## Setup & Usage
+## Setup & Usage in your own project
 
 1. Add the `QAToolPlayerTracker` component to your player character.
 2. Open the **QATool** window in Unity.

@@ -123,28 +123,26 @@ namespace QATool
 
         void MoveFiles(int num)
         {
-
-
             for (int i = 1; i <= num; i++)
             {
                 string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "QATool", "Files", $"{i}.jsonl");
                 File.Copy(path, Path.Combine(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "QATool", Application.productName, $"{i}.jsonl")),true);
             }
         }
+
+        private bool _foldMoveFiles = true;
+        
         void OnGUI()
         {
-            if (GUILayout.Button("Move 3 Files"))
+            // ── Move Files ────────────────────────────
+            DrawSection("Move Files", ref _foldMoveFiles, () =>
             {
-                MoveFiles(3);
-            }
-            if (GUILayout.Button("Move 8 Files"))
-            {
-                MoveFiles(8);
-            }
-            if (GUILayout.Button("Move 18 Files"))
-            {
-                MoveFiles(18);
-            }
+                if (GUILayout.Button("Move 3 Files"))  MoveFiles(3);
+                if (GUILayout.Button("Move 8 Files"))  MoveFiles(8);
+                if (GUILayout.Button("Move 18 Files")) MoveFiles(18);
+            });
+            GUILayout.Space(4);
+            
             // ── Title ──────────────────────────────────
             GUILayout.Space(8);
             GUILayout.Label("QA Tool", EditorStyles.boldLabel);
